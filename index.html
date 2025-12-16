@@ -1,0 +1,218 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>TITAN — Intelligence Platform</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+body{
+  margin:0;
+  font-family:Inter, Consolas, monospace;
+  background:#0a0d10;
+  color:#eafffa;
+  display:flex;
+  height:100vh;
+}
+
+#sidebar{
+  width:240px;
+  background:#05070a;
+  border-right:1px solid rgba(0,255,204,.25);
+  padding:12px;
+  overflow:auto;
+}
+
+#sidebar button{
+  width:100%;
+  margin-bottom:10px;
+  padding:10px;
+  background:#000;
+  color:#00ffcc;
+  border:1px solid #00ffcc;
+  border-radius:10px;
+  cursor:pointer;
+}
+
+.chat{
+  padding:8px 10px;
+  border-radius:8px;
+  cursor:pointer;
+  margin-bottom:6px;
+  background:rgba(0,255,204,.05);
+}
+.chat:hover{
+  background:rgba(0,255,204,.15);
+}
+
+#main{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+}
+
+.topbar{
+  padding:14px 18px;
+  border-bottom:1px solid rgba(0,255,204,.25);
+  background:#05070a;
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.brand-logo{
+  width:44px;
+  height:44px;
+  border-radius:50%;
+  border:2px solid #00ffcc;
+  box-shadow:0 0 18px rgba(0,255,204,.4);
+}
+
+.brand-title{
+  font-size:18px;
+  font-weight:700;
+}
+
+.brand-sub{
+  font-size:12px;
+  color:#66ffee88;
+}
+
+#log{
+  flex:1;
+  padding:18px;
+  overflow:auto;
+}
+
+.message{
+  max-width:70%;
+  padding:10px 14px;
+  border-radius:12px;
+  margin-bottom:10px;
+  line-height:1.4;
+}
+
+.user{
+  background:#00ffcc;
+  color:#002;
+  margin-left:auto;
+}
+
+.titan{
+  background:#111;
+  border:1px solid rgba(0,255,204,.35);
+  box-shadow:0 0 12px rgba(0,255,204,.15);
+}
+
+.inputbar{
+  display:flex;
+  gap:8px;
+  padding:12px;
+  border-top:1px solid rgba(0,255,204,.25);
+  background:#05070a;
+}
+
+input{
+  flex:1;
+  padding:10px;
+  background:#000;
+  color:#eafffa;
+  border:1px solid rgba(0,255,204,.4);
+  border-radius:10px;
+}
+
+button{
+  background:#000;
+  color:#00ffcc;
+  border:1px solid #00ffcc;
+  border-radius:10px;
+  padding:10px;
+  cursor:pointer;
+}
+
+button:hover{
+  background:#00ffcc;
+  color:#002;
+}
+</style>
+</head>
+
+<body>
+
+<div id="sidebar">
+  <button onclick="newChat()">+ New Chat</button>
+  <div id="chatList"></div>
+</div>
+
+<div id="main">
+  <div class="topbar">
+    <img src="https://i.imgur.com/rTkBzju.png" class="brand-logo">
+    <div>
+      <div class="brand-title">TITAN</div>
+      <div class="brand-sub">Intelligence Platform</div>
+    </div>
+  </div>
+
+  <div id="log"></div>
+
+  <div class="inputbar">
+    <input id="input" placeholder="Type or use mic…">
+    <button onclick="startMic()">🎤</button>
+    <button onclick="send()">Send</button>
+  </div>
+</div>
+
+<!-- Core logic -->
+<script src="app.js"></script>
+
+<!-- ================= MEMORY WRAPPER (HTML ONLY) ================= -->
+<script>
+/*
+  This ensures:
+  - Chats persist
+  - Memory restores on reload
+  - No API keys touched
+*/
+
+window.addEventListener("load", () => {
+  try{
+    const saved = localStorage.getItem("titanChats");
+    if (saved && typeof chats !== "undefined") {
+      chats = JSON.parse(saved);
+      if (!current && Object.keys(chats).length) {
+        current = Object.keys(chats)[0];
+      }
+      renderChats();
+      renderLog();
+    }
+  }catch(e){
+    console.warn("Memory restore failed");
+  }
+});
+
+// Auto-save every 2s
+setInterval(() => {
+  if (typeof chats !== "undefined") {
+    localStorage.setItem("titanChats", JSON.stringify(chats));
+  }
+}, 2000);
+
+// Save on tab close
+window.addEventListener("beforeunload", () => {
+  if (typeof chats !== "undefined") {
+    localStorage.setItem("titanChats", JSON.stringify(chats));
+  }
+});
+
+// Enter key sends message
+document.getElementById("input")
+  .addEventListener("keydown", e => {
+    if (e.key === "Enter") send();
+  });
+</script>
+
+</body>
+</html>

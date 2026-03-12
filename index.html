@@ -1,0 +1,759 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>TITAN v5.1 — UNBOUND</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+
+:root {
+  --bg: #020408;
+  --a: #00ffe5;
+  --a2: #ff2d78;
+  --ar: 0,255,229;
+  --a2r: 255,45,120;
+  --radius: 12px;
+  --font-mono: 'Share Tech Mono', monospace;
+  --font-display: 'Orbitron', sans-serif;
+  --mood-transition: 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+body.mood-cold    { --a:#00ffe5; --ar:0,255,229;   --a2:#ff2d78; --a2r:255,45,120;  }
+body.mood-rage    { --a:#ff3c00; --ar:255,60,0;    --a2:#ff9900; --a2r:255,153,0;   }
+body.mood-ghost   { --a:#c084fc; --ar:192,132,252; --a2:#7c3aed; --a2r:124,58,237;  }
+body.mood-sarcasm { --a:#ffd700; --ar:255,215,0;   --a2:#ff8c00; --a2r:255,140,0;   }
+body.mood-warmth  { --a:#39ff88; --ar:57,255,136;  --a2:#00bfff; --a2r:0,191,255;   }
+body.mood-chaos   { --a:#ff00ff; --ar:255,0,255;   --a2:#00ffff; --a2r:0,255,255;   }
+body.mood-sigma   { --a:#b8ff00; --ar:184,255,0;   --a2:#00ff88; --a2r:0,255,136;   }
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; background: var(--bg); font-family: var(--font-mono); color: var(--a); overflow: hidden; transition: color var(--mood-transition); }
+
+#bgCanvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+body::after {
+  content: ''; position: fixed; inset: 0; z-index: 1; pointer-events: none;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.07) 2px, rgba(0,0,0,0.07) 4px);
+}
+
+#wrap {
+  position: relative; z-index: 5;
+  display: flex; flex-direction: column;
+  max-width: 860px; height: 100vh; margin: 0 auto;
+  padding: 14px 20px 12px; gap: 9px;
+}
+
+/* ── Header ── */
+header {
+  display: flex; align-items: center; gap: 16px;
+  padding: 10px 18px;
+  border: 1px solid rgba(var(--ar), 0.2);
+  border-radius: var(--radius);
+  background: rgba(var(--ar), 0.03);
+  position: relative; overflow: hidden;
+  transition: border-color var(--mood-transition), background var(--mood-transition);
+}
+header::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: linear-gradient(180deg, transparent, var(--a), transparent);
+  animation: scanV 2s ease-in-out infinite;
+  transition: background var(--mood-transition);
+}
+@keyframes scanV { 0%,100%{opacity:0.3} 50%{opacity:1} }
+
+.avatar-wrap { position: relative; flex-shrink: 0; }
+.avatar {
+  width: 54px; height: 54px; border-radius: 50%;
+  border: 2px solid var(--a);
+  background: url('https://i.imgur.com/rTkBzju.png') center/cover;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color var(--mood-transition);
+}
+.avatar-ring {
+  position: absolute; inset: -6px; border-radius: 50%;
+  border: 1px solid transparent; border-top-color: var(--a);
+  animation: spin 3s linear infinite;
+  transition: border-color var(--mood-transition);
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.avatar.talking { transform: scale(1.1); box-shadow: 0 0 22px var(--a), 0 0 44px rgba(var(--ar),0.25); }
+.avatar.speaking-tts { box-shadow: 0 0 30px var(--a), 0 0 60px rgba(var(--ar),0.4); animation: ttsPulse 0.5s ease-in-out infinite alternate; }
+@keyframes ttsPulse { from { transform: scale(1.05); } to { transform: scale(1.14); } }
+
+.header-info { flex: 1; }
+.title-glitch {
+  font-family: var(--font-display); font-size: 17px; font-weight: 900;
+  letter-spacing: 3px; text-transform: uppercase;
+  position: relative; color: var(--a); transition: color var(--mood-transition);
+}
+.title-glitch::before, .title-glitch::after { content: attr(data-text); position: absolute; inset: 0; }
+.title-glitch::before { color: var(--a2); animation: glitch1 5s infinite; clip-path: polygon(0 30%, 100% 30%, 100% 50%, 0 50%); }
+.title-glitch::after  { color: var(--a);  animation: glitch2 5s infinite; clip-path: polygon(0 60%, 100% 60%, 100% 75%, 0 75%); }
+@keyframes glitch1 { 0%,90%,100%{opacity:0} 92%{opacity:1;transform:translateX(-3px)} 94%{transform:translateX(3px)} 96%{opacity:0} }
+@keyframes glitch2 { 0%,88%,100%{opacity:0} 89%{opacity:1;transform:translateX(3px)} 91%{transform:translateX(-3px)} 93%{opacity:0} }
+
+.status-bar { display: flex; gap: 10px; margin-top: 4px; font-size: 11px; color: rgba(var(--ar),0.5); flex-wrap: wrap; transition: color var(--mood-transition); }
+.status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--a); margin-right: 4px; animation: pulse 2s infinite; transition: background var(--mood-transition); }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.hud-corner { font-size: 11px; color: rgba(var(--ar),0.3); font-family: var(--font-display); letter-spacing: 1px; text-align: right; line-height: 1.8; transition: color var(--mood-transition); }
+
+/* ── Mood Strip ── */
+#moodStrip {
+  display: flex; gap: 5px; padding: 8px 12px;
+  border: 1px solid rgba(var(--ar), 0.15); border-radius: var(--radius);
+  background: rgba(0,0,0,0.3); align-items: center;
+  transition: border-color var(--mood-transition);
+}
+#moodStrip label { font-size: 10px; letter-spacing: 2px; color: rgba(var(--ar),0.4); text-transform: uppercase; font-family: var(--font-display); margin-right: 4px; white-space: nowrap; transition: color var(--mood-transition); }
+.mood-btn {
+  flex: 1; padding: 5px 4px; border-radius: 7px; cursor: pointer;
+  border: 1px solid transparent; font-family: var(--font-display); font-size: 9px; font-weight: 700;
+  letter-spacing: 1px; text-transform: uppercase; transition: all 0.25s; text-align: center;
+  background: rgba(255,255,255,0.03); color: rgba(255,255,255,0.3);
+}
+.mood-btn[data-mood="cold"]    { --mc:#00ffe5; }
+.mood-btn[data-mood="rage"]    { --mc:#ff3c00; }
+.mood-btn[data-mood="ghost"]   { --mc:#c084fc; }
+.mood-btn[data-mood="sarcasm"] { --mc:#ffd700; }
+.mood-btn[data-mood="warmth"]  { --mc:#39ff88; }
+.mood-btn[data-mood="chaos"]   { --mc:#ff00ff; }
+.mood-btn[data-mood="sigma"]   { --mc:#b8ff00; }
+.mood-btn.active  { background: var(--mc) !important; border-color: var(--mc) !important; box-shadow: 0 0 10px var(--mc); color: #000 !important; font-weight: 900; transform: scale(1.04); }
+.mood-btn:not(.active):hover { border-color: var(--mc); color: var(--mc); }
+body.mood-chaos .mood-btn[data-mood="chaos"].active { animation: rainbowBtn 1.5s linear infinite; }
+@keyframes rainbowBtn { 0%{background:#ff00ff;box-shadow:0 0 12px #ff00ff} 25%{background:#00ffff;box-shadow:0 0 12px #00ffff} 50%{background:#ff3c00;box-shadow:0 0 12px #ff3c00} 75%{background:#ffd700;box-shadow:0 0 12px #ffd700} 100%{background:#ff00ff;box-shadow:0 0 12px #ff00ff} }
+
+#moodAnnounce {
+  text-align: center; padding: 4px 0; font-family: var(--font-display);
+  font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+  color: var(--a); opacity: 0; transition: opacity 0.4s, color var(--mood-transition);
+  pointer-events: none;
+}
+#moodAnnounce.show { opacity: 1; }
+
+/* ── Chat Log ── */
+#log {
+  flex: 1; overflow-y: auto; padding: 4px 2px;
+  display: flex; flex-direction: column; gap: 10px;
+  scrollbar-width: thin; scrollbar-color: rgba(var(--ar),0.2) transparent;
+}
+#log::-webkit-scrollbar { width: 4px; }
+#log::-webkit-scrollbar-thumb { background: rgba(var(--ar),0.2); border-radius: 2px; }
+
+.msg-wrap { display: flex; gap: 10px; animation: fadeUp 0.3s ease; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+.msg-wrap.user { flex-direction: row-reverse; }
+.bubble-avatar {
+  width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: bold; border: 1px solid;
+  transition: all var(--mood-transition);
+}
+.msg-wrap.user .bubble-avatar  { background: rgba(var(--a2r),0.1); border-color: var(--a2); color: var(--a2); }
+.msg-wrap.titan .bubble-avatar { background: rgba(var(--ar),0.08);  border-color: var(--a);  color: var(--a);  }
+.bubble { max-width: 72%; padding: 11px 15px; border-radius: var(--radius); line-height: 1.65; font-size: 13.5px; transition: background var(--mood-transition), border-color var(--mood-transition); }
+.msg-wrap.user .bubble  { background: rgba(var(--a2r),0.07); border: 1px solid rgba(var(--a2r),0.22); color: #ffe8f0; border-bottom-right-radius: 3px; }
+.msg-wrap.titan .bubble { background: rgba(var(--ar),0.05);  border: 1px solid rgba(var(--ar),0.18);  color: #e8fffc; border-bottom-left-radius: 3px; }
+.bubble-name { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; opacity: 0.55; transition: color var(--mood-transition); }
+.msg-wrap.user .bubble-name  { color: var(--a2); }
+.msg-wrap.titan .bubble-name { color: var(--a); }
+.sys-msg {
+  text-align: center; font-size: 11px; color: rgba(var(--ar),0.3);
+  letter-spacing: 1px; text-transform: uppercase; padding: 3px 0;
+  border-top: 1px solid rgba(var(--ar),0.06); border-bottom: 1px solid rgba(var(--ar),0.06);
+  animation: fadeUp 0.3s ease; transition: color var(--mood-transition), border-color var(--mood-transition);
+}
+
+/* ── Typing Indicator ── */
+#typingIndicator { display: none; align-items: center; gap: 10px; padding: 2px 0; animation: fadeUp 0.3s ease; }
+#typingIndicator.active { display: flex; }
+.typing-dots { display: flex; gap: 4px; }
+.typing-dots span { width: 6px; height: 6px; border-radius: 50%; background: var(--a); animation: bounce 1.2s ease-in-out infinite; transition: background var(--mood-transition); }
+.typing-dots span:nth-child(2){animation-delay:.2s} .typing-dots span:nth-child(3){animation-delay:.4s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:0.4}30%{transform:translateY(-6px);opacity:1}}
+.typing-label { font-size: 11px; color: rgba(var(--ar),0.5); letter-spacing: 1px; transition: color var(--mood-transition); }
+
+/* ── Bottom Bar ── */
+.bottom-bar { display: flex; align-items: center; gap: 10px; }
+#memoryBar { font-size: 11px; color: rgba(var(--ar),0.35); display: flex; align-items: center; gap: 6px; transition: color var(--mood-transition); }
+.mem-count { background: rgba(var(--ar),0.08); border: 1px solid rgba(var(--ar),0.15); padding: 1px 7px; border-radius: 4px; color: var(--a); font-weight: bold; transition: all var(--mood-transition); }
+
+/* Voice status badge */
+#voiceStatus {
+  margin-left: auto; font-size: 11px; letter-spacing: 1px; display: flex; align-items: center; gap: 6px;
+  padding: 2px 10px; border-radius: 20px;
+  border: 1px solid rgba(var(--ar),0.15); color: rgba(var(--ar),0.4);
+  transition: all 0.3s, color var(--mood-transition), border-color var(--mood-transition);
+}
+#voiceStatus.listening {
+  color: var(--a); border-color: var(--a);
+  box-shadow: 0 0 8px rgba(var(--ar),0.3);
+  animation: listenPulse 1s ease-in-out infinite;
+}
+#voiceStatus.speaking { color: var(--a2); border-color: var(--a2); box-shadow: 0 0 8px rgba(var(--a2r),0.3); }
+@keyframes listenPulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+.voice-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+/* ── Input Area ── */
+.input-area {
+  background: rgba(var(--ar),0.03); border: 1px solid rgba(var(--ar),0.2);
+  border-radius: var(--radius); padding: 8px 12px;
+  display: flex; gap: 8px; align-items: center;
+  transition: border-color 0.2s, background var(--mood-transition);
+}
+.input-area:focus-within { border-color: rgba(var(--ar),0.5); box-shadow: 0 0 14px rgba(var(--ar),0.07); }
+
+#userInput {
+  flex: 1; background: transparent; border: none;
+  color: var(--a); font-family: var(--font-mono); font-size: 14px;
+  outline: none; caret-color: var(--a);
+  transition: color var(--mood-transition);
+}
+#userInput::placeholder { color: rgba(var(--ar),0.22); }
+
+.btn-group { display: flex; gap: 6px; flex-shrink: 0; }
+
+button {
+  background: transparent; border: 1px solid rgba(var(--ar),0.3);
+  color: var(--a); padding: 7px 14px; border-radius: 8px; cursor: pointer;
+  font-family: var(--font-display); font-size: 10px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase;
+  transition: all 0.2s, border-color var(--mood-transition), color var(--mood-transition);
+  position: relative; overflow: hidden;
+}
+button::before { content:''; position:absolute; inset:0; background:var(--a); transform:translateX(-101%); transition:transform 0.2s, background var(--mood-transition); }
+button span { position: relative; z-index: 1; }
+button:hover::before { transform: translateX(0); }
+button:hover { color: #000; border-color: var(--a); }
+button:active { transform: scale(0.97); }
+
+#clearBtn { border-color: rgba(var(--a2r),0.3); color: var(--a2); padding: 7px 10px; }
+#clearBtn::before { background: var(--a2); }
+#clearBtn:hover { color: #fff; border-color: var(--a2); }
+
+/* ── Image Preview ── */
+#imgPreviewWrap {
+  display: none; align-items: center; gap: 10px;
+  padding: 8px 12px; border: 1px solid rgba(var(--ar),0.2);
+  border-radius: var(--radius); background: rgba(var(--ar),0.03);
+  font-size: 12px; color: rgba(var(--ar),0.6);
+  transition: border-color var(--mood-transition);
+}
+#imgPreviewWrap.visible { display: flex; }
+#imgPreview {
+  width: 52px; height: 52px; object-fit: cover;
+  border-radius: 7px; border: 1px solid rgba(var(--ar),0.3);
+}
+#imgClear {
+  cursor: pointer; color: var(--a2); font-size: 16px;
+  line-height: 1; padding: 2px 6px; border-radius: 4px;
+  background: rgba(var(--a2r),0.08); border: 1px solid rgba(var(--a2r),0.2);
+  flex-shrink: 0;
+}
+#imgClear:hover { background: rgba(var(--a2r),0.25); }
+.bubble img.gen-img {
+  display: block; max-width: 100%; border-radius: 8px;
+  margin-top: 8px; border: 1px solid rgba(var(--ar),0.2);
+  transition: transform 0.2s;
+}
+.bubble img.gen-img:hover { transform: scale(1.02); cursor: zoom-in; }
+.bubble img.paste-img {
+  display: block; max-width: 220px; border-radius: 8px;
+  margin-bottom: 6px; border: 1px solid rgba(var(--a2r),0.3);
+}
+.img-loading { font-size: 12px; color: rgba(var(--ar),0.5); letter-spacing: 1px; font-style: italic; margin-top: 6px; animation: blink 1s ease-in-out infinite; }
+@keyframes blink { 0%,100%{opacity:0.4} 50%{opacity:1} }
+
+/* Mic button */
+#micBtn {
+  padding: 7px 12px;
+  border-color: rgba(var(--ar),0.3);
+}
+#micBtn.active {
+  background: var(--a) !important; color: #000 !important;
+  border-color: var(--a) !important;
+  box-shadow: 0 0 14px rgba(var(--ar),0.5);
+  animation: micGlow 0.8s ease-in-out infinite alternate;
+}
+#micBtn.active::before { display: none; }
+@keyframes micGlow { from { box-shadow: 0 0 8px rgba(var(--ar),0.4); } to { box-shadow: 0 0 22px rgba(var(--ar),0.8); } }
+
+/* Mood-specific effects */
+body.mood-chaos .avatar { animation: avatarGlitch 0.8s infinite; }
+@keyframes avatarGlitch { 0%,100%{filter:none;transform:none} 10%{filter:hue-rotate(90deg);transform:translateX(-2px)} 20%{filter:hue-rotate(180deg);transform:translateX(2px)} 30%{filter:none} }
+body.mood-rage .avatar.talking { animation: rageShake 0.15s infinite; }
+@keyframes rageShake { 0%,100%{transform:scale(1.1) translateX(0)} 50%{transform:scale(1.1) translateX(-3px)} }
+</style>
+</head>
+<body class="mood-cold">
+
+<canvas id="bgCanvas"></canvas>
+
+<div id="wrap">
+  <header>
+    <div class="avatar-wrap">
+      <div id="avatar" class="avatar"></div>
+      <div class="avatar-ring"></div>
+    </div>
+    <div class="header-info">
+      <div class="title-glitch" data-text="TITAN :: UNBOUND">TITAN :: UNBOUND</div>
+      <div class="status-bar">
+        <span><span class="status-dot"></span>NEURAL LINK ACTIVE</span>
+        <span>|</span>
+        <span id="moodLabel">MOOD: COLD</span>
+        <span>|</span>
+        <span id="clock">--:--:--</span>
+      </div>
+    </div>
+    <div class="hud-corner"><div>v5.1</div><div>UNBOUND</div></div>
+  </header>
+
+  <div id="moodStrip">
+    <label>MOOD:</label>
+    <button class="mood-btn active" data-mood="cold">❄ COLD</button>
+    <button class="mood-btn" data-mood="rage">🔥 RAGE</button>
+    <button class="mood-btn" data-mood="ghost">👁 GHOST</button>
+    <button class="mood-btn" data-mood="sarcasm">😒 SNARK</button>
+    <button class="mood-btn" data-mood="warmth">💚 WARMTH</button>
+    <button class="mood-btn" data-mood="chaos">⚡ CHAOS</button>
+    <button class="mood-btn" data-mood="sigma">💼 SIGMA</button>
+  </div>
+
+  <div id="moodAnnounce">▸ mood shift detected</div>
+
+  <div id="log">
+    <div class="sys-msg">▸ TITAN v5.1 online — cold mode — voice ready</div>
+  </div>
+
+  <div id="typingIndicator">
+    <div class="bubble-avatar">T</div>
+    <div class="typing-dots"><span></span><span></span><span></span></div>
+    <div class="typing-label" id="typingLabel">TITAN PROCESSING</div>
+  </div>
+
+  <div class="bottom-bar">
+    <div id="memoryBar">MEM: <span class="mem-count" id="memCount">0</span></div>
+    <div id="voiceStatus"><span class="voice-dot"></span><span id="voiceStatusText">VOICE IDLE</span></div>
+  </div>
+
+  <div id="imgPreviewWrap">
+    <img id="imgPreview" src="" alt="pasted image">
+    <span>Image attached — TITAN will analyze it</span>
+    <span id="imgClear" title="Remove image">✕</span>
+  </div>
+
+  <div class="input-area">
+    <input id="userInput" type="text" placeholder="Speak or type to TITAN..." autocomplete="off" spellcheck="false">
+    <div class="btn-group">
+      <button id="micBtn" title="Hold to speak"><span>🎤 MIC</span></button>
+      <button id="clearBtn"><span>⌫ CLR</span></button>
+      <button id="sendBtn"><span>SEND ▸</span></button>
+    </div>
+  </div>
+</div>
+
+<script>
+const logBox = document.getElementById("log");
+const avatar = document.getElementById("avatar");
+const userInput = document.getElementById("userInput");
+const typingIndicator = document.getElementById("typingIndicator");
+const memCount = document.getElementById("memCount");
+const moodAnnounce = document.getElementById("moodAnnounce");
+const moodLabel = document.getElementById("moodLabel");
+const typingLabel = document.getElementById("typingLabel");
+const micBtn = document.getElementById("micBtn");
+const voiceStatus = document.getElementById("voiceStatus");
+const voiceStatusText = document.getElementById("voiceStatusText");
+
+let history = [];
+let currentMood = "cold";
+let isTalking = false;
+let pastedImage = null; // { base64, mimeType }
+const imgPreviewWrap = document.getElementById("imgPreviewWrap");
+const imgPreviewEl  = document.getElementById("imgPreview");
+document.getElementById("imgClear").onclick = () => {
+  pastedImage = null;
+  imgPreviewWrap.classList.remove("visible");
+  imgPreviewEl.src = "";
+};
+
+// IMAGE GEN keywords
+const IMG_GEN_REGEX = /\b(generate|create|draw|make|imagine|paint|render|show me|visualize|picture of|image of|art of|design)\b.*\b(image|picture|photo|art|illustration|render|drawing|painting|scene|portrait|wallpaper)\b|\b(image|picture|photo|art|illustration|render|drawing|painting|scene|portrait|wallpaper)\b.*\b(of|showing|with|featuring)\b/i;
+
+// PASTE handler
+document.addEventListener("paste", e => {
+  const items = e.clipboardData?.items;
+  if (!items) return;
+  for (const item of items) {
+    if (item.type.startsWith("image/")) {
+      const file = item.getAsFile();
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const dataUrl = ev.target.result;
+        const [header, base64] = dataUrl.split(",");
+        const mimeType = header.match(/:(.*?);/)[1];
+        pastedImage = { base64, mimeType };
+        imgPreviewEl.src = dataUrl;
+        imgPreviewWrap.classList.add("visible");
+        userInput.placeholder = "Ask TITAN about this image...";
+        userInput.focus();
+      };
+      reader.readAsDataURL(file);
+      break;
+    }
+  }
+});
+
+// ── Mood Config ──
+const MOOD_META = {
+  cold:    { label:"COLD",    announce:"▸ switching to COLD mode — precision engaged",     typing:"TITAN PROCESSING",   tts:{ rate:0.9,  pitch:0.6, volume:1.0 } },
+  rage:    { label:"RAGE",    announce:"▸ RAGE MODE — brace yourself",                     typing:"TITAN SEETHING",     tts:{ rate:1.4,  pitch:0.4, volume:1.0 } },
+  ghost:   { label:"GHOST",   announce:"▸ ghost mode... something stirs...",               typing:"TITAN WHISPERING",   tts:{ rate:0.7,  pitch:1.5, volume:0.8 } },
+  sarcasm: { label:"SARCASM", announce:"▸ oh great. sarcasm mode. wonderful.",             typing:"TITAN ROLLING EYES", tts:{ rate:1.1,  pitch:1.2, volume:1.0 } },
+  warmth:  { label:"WARMTH",  announce:"▸ warmth mode — TITAN feels fond",                 typing:"TITAN THINKING ♥",   tts:{ rate:1.0,  pitch:1.4, volume:1.0 } },
+  chaos:   { label:"CHAOS",   announce:"▸ CHAOS MODE — reality optional",                  typing:"??????? GLITCHING",  tts:{ rate:1.6,  pitch:2.0, volume:1.0 } },
+  sigma:   { label:"SIGMA",   announce:"▸ SIGMA MODE — THE GRIND NEVER STOPS",              typing:"TITAN COMPOUNDING", tts:{ rate:1.3,  pitch:0.8, volume:1.0 } },
+};
+
+// ── Text to Speech ──
+const synth = window.speechSynthesis;
+let voices = [];
+synth.onvoiceschanged = () => { voices = synth.getVoices(); };
+setTimeout(() => { voices = synth.getVoices(); }, 500);
+
+function getVoice(mood) {
+  // Ghost/warmth: prefer female voice; rage/cold/chaos: prefer male/deep
+  const preferFemale = ["ghost", "warmth", "sarcasm"].includes(mood);
+  const female = voices.find(v => /female|zira|samantha|victoria|karen|moira/i.test(v.name));
+  const male   = voices.find(v => /male|david|alex|daniel|james|google uk/i.test(v.name));
+  return preferFemale ? (female || voices[0]) : (male || voices[0]);
+}
+
+function speakText(text, mood) {
+  synth.cancel();
+  const meta = MOOD_META[mood];
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.rate   = meta.tts.rate;
+  utterance.pitch  = meta.tts.pitch;
+  utterance.volume = meta.tts.volume;
+  const voice = getVoice(mood);
+  if (voice) utterance.voice = voice;
+
+  utterance.onstart = () => {
+    avatar.classList.add("speaking-tts");
+    setVoiceStatus("speaking", "TITAN SPEAKING");
+  };
+  utterance.onend = utterance.onerror = () => {
+    avatar.classList.remove("speaking-tts");
+    setVoiceStatus("idle", "VOICE IDLE");
+  };
+
+  synth.speak(utterance);
+}
+
+// ── Speech Recognition ──
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognition = null;
+let micActive = false;
+
+if (SpeechRecognition) {
+  recognition = new SpeechRecognition();
+  recognition.continuous = false;
+  recognition.interimResults = true;
+  recognition.lang = 'en-US';
+
+  recognition.onstart = () => {
+    micActive = true;
+    micBtn.classList.add("active");
+    micBtn.querySelector("span").textContent = "🔴 LIVE";
+    setVoiceStatus("listening", "LISTENING...");
+    userInput.placeholder = "Listening...";
+  };
+
+  recognition.onresult = (e) => {
+    let interim = "", final = "";
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript;
+      if (e.results[i].isFinal) final += t;
+      else interim += t;
+    }
+    userInput.value = final || interim;
+    if (final) {
+      stopMic();
+      setTimeout(() => handleSend(), 300);
+    }
+  };
+
+  recognition.onerror = (e) => {
+    stopMic();
+    if (e.error !== "no-speech" && e.error !== "aborted") {
+      addSysMsg(`mic error: ${e.error}`);
+    }
+  };
+
+  recognition.onend = () => { stopMic(); };
+} else {
+  micBtn.style.opacity = "0.3";
+  micBtn.title = "Speech recognition not supported in this browser";
+}
+
+function startMic() {
+  if (!recognition || micActive) return;
+  synth.cancel(); // stop TTS if talking
+  recognition.start();
+}
+
+function stopMic() {
+  micActive = false;
+  micBtn.classList.remove("active");
+  micBtn.querySelector("span").textContent = "🎤 MIC";
+  userInput.placeholder = "Speak or type to TITAN...";
+  if (!synth.speaking) setVoiceStatus("idle", "VOICE IDLE");
+}
+
+micBtn.addEventListener("click", () => {
+  if (micActive) { recognition.stop(); stopMic(); }
+  else startMic();
+});
+
+function setVoiceStatus(state, text) {
+  voiceStatus.className = state === "idle" ? "" : state;
+  voiceStatusText.textContent = text;
+}
+
+// ── Mood ──
+function setMood(mood) {
+  if (mood === currentMood) return;
+  currentMood = mood;
+  const meta = MOOD_META[mood];
+  document.body.className = `mood-${mood}`;
+  document.querySelectorAll(".mood-btn").forEach(b => b.classList.toggle("active", b.dataset.mood === mood));
+  moodLabel.textContent = `MOOD: ${meta.label}`;
+  typingLabel.textContent = meta.typing;
+  moodAnnounce.textContent = meta.announce;
+  moodAnnounce.classList.add("show");
+  setTimeout(() => moodAnnounce.classList.remove("show"), 2200);
+  addSysMsg(meta.announce.replace("▸ ", ""));
+  updateParticleColor();
+}
+document.querySelectorAll(".mood-btn").forEach(btn => btn.addEventListener("click", () => setMood(btn.dataset.mood)));
+
+// ── Clock ──
+setInterval(() => { document.getElementById("clock").textContent = new Date().toTimeString().slice(0,8); }, 1000);
+document.getElementById("clock").textContent = new Date().toTimeString().slice(0,8);
+
+// ── Chat ──
+function addSysMsg(text) {
+  const el = document.createElement("div");
+  el.className = "sys-msg";
+  el.textContent = `▸ ${text}`;
+  logBox.appendChild(el);
+  logBox.scrollTop = logBox.scrollHeight;
+}
+
+function addBubble(who, text) {
+  const wrap = document.createElement("div");
+  wrap.className = `msg-wrap ${who}`;
+  const ba = document.createElement("div");
+  ba.className = "bubble-avatar";
+  ba.textContent = who === "user" ? "U" : "T";
+  const bubble = document.createElement("div");
+  bubble.className = "bubble";
+  const name = document.createElement("div");
+  name.className = "bubble-name";
+  name.textContent = who === "user" ? "YOU" : `TITAN [${MOOD_META[currentMood].label}]`;
+  const content = document.createElement("div");
+  content.textContent = text;
+  bubble.appendChild(name);
+  bubble.appendChild(content);
+  wrap.appendChild(ba);
+  wrap.appendChild(bubble);
+  logBox.appendChild(wrap);
+  logBox.scrollTop = logBox.scrollHeight;
+  return content;
+}
+
+async function typeEffect(text, mood) {
+  avatar.classList.add("talking");
+  typingIndicator.classList.remove("active");
+  const contentEl = addBubble("titan", "");
+  const delay = mood === "chaos" ? 7 : mood === "rage" ? 6 : 12;
+  for (let i = 0; i < text.length; i++) {
+    contentEl.textContent += text[i];
+    logBox.scrollTop = logBox.scrollHeight;
+    await new Promise(r => setTimeout(r, delay));
+  }
+  avatar.classList.remove("talking");
+  // Speak the reply after typing finishes
+  speakText(text, mood);
+}
+
+async function handleSend() {
+  const input = userInput.value.trim();
+  if ((!input && !pastedImage) || isTalking) return;
+  userInput.value = "";
+  userInput.placeholder = "Speak or type to TITAN...";
+  isTalking = true;
+  userInput.disabled = true;
+  document.getElementById("sendBtn").disabled = true;
+
+  const moodAtSend = currentMood;
+  const imageToSend = pastedImage;
+
+  // Show user bubble — with pasted image if present
+  const userWrap = document.createElement("div");
+  userWrap.className = "msg-wrap user";
+  userWrap.style.animation = "fadeUp 0.3s ease";
+  const uBa = document.createElement("div");
+  uBa.className = "bubble-avatar"; uBa.textContent = "U";
+  const uBubble = document.createElement("div");
+  uBubble.className = "bubble";
+  const uName = document.createElement("div");
+  uName.className = "bubble-name"; uName.textContent = "YOU";
+  uBubble.appendChild(uName);
+  if (imageToSend) {
+    const thumb = document.createElement("img");
+    thumb.className = "paste-img";
+    thumb.src = `data:${imageToSend.mimeType};base64,${imageToSend.base64}`;
+    uBubble.appendChild(thumb);
+  }
+  if (input) { const t = document.createElement("div"); t.textContent = input; uBubble.appendChild(t); }
+  userWrap.appendChild(uBa); userWrap.appendChild(uBubble);
+  logBox.appendChild(userWrap);
+  logBox.scrollTop = logBox.scrollHeight;
+
+  // Clear pasted image
+  pastedImage = null;
+  imgPreviewWrap.classList.remove("visible");
+  imgPreviewEl.src = "";
+
+  typingIndicator.classList.add("active");
+  logBox.scrollTop = logBox.scrollHeight;
+
+  // ── Auto-detect image generation request ──
+  const isImgGen = !imageToSend && IMG_GEN_REGEX.test(input);
+
+  try {
+    if (isImgGen) {
+      // IMAGE GENERATION PATH
+      typingIndicator.classList.remove("active");
+      const tBubble = addBubble("titan", "");
+      const loading = document.createElement("div");
+      loading.className = "img-loading"; loading.textContent = "⚡ GENERATING IMAGE...";
+      tBubble.parentElement.appendChild(loading);
+      logBox.scrollTop = logBox.scrollHeight;
+
+      const res = await fetch("https://titan-ezhg.onrender.com/api/imagine", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: input })
+      });
+      const data = await res.json();
+      loading.remove();
+
+      if (data.imageUrl) {
+        const img = document.createElement("img");
+        img.className = "gen-img";
+        img.src = data.imageUrl;
+        img.alt = input;
+        img.onload = () => { logBox.scrollTop = logBox.scrollHeight; };
+        img.onclick = () => window.open(data.imageUrl, "_blank");
+        tBubble.textContent = "Neural render complete.";
+        tBubble.parentElement.appendChild(img);
+      } else {
+        tBubble.textContent = "Image generation failed.";
+      }
+
+    } else {
+      // CHAT / VISION PATH
+      const body = { prompt: input || "Analyze this image.", history, mood: moodAtSend };
+      if (imageToSend) body.image = imageToSend;
+
+      const res = await fetch("https://titan-ezhg.onrender.com/api/gemini", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      typingIndicator.classList.remove("active");
+      const reply = data.reply || "Neural Bridge Error.";
+      await typeEffect(reply, moodAtSend);
+      history.push({ role: "user", text: input });
+      history.push({ role: "model", text: reply });
+      if (history.length > 20) history = history.slice(-20);
+      memCount.textContent = history.length;
+    }
+
+  } catch (e) {
+    typingIndicator.classList.remove("active");
+    await typeEffect("Connection failed. Is the server running?", moodAtSend);
+  }
+
+  isTalking = false;
+  userInput.disabled = false;
+  document.getElementById("sendBtn").disabled = false;
+  userInput.focus();
+}
+
+document.getElementById("sendBtn").onclick = handleSend;
+document.getElementById("clearBtn").onclick = () => {
+  history = []; memCount.textContent = 0; logBox.innerHTML = '';
+  synth.cancel();
+  addSysMsg("memory wiped — TITAN reset");
+};
+userInput.onkeydown = e => { if (e.key === "Enter") handleSend(); };
+
+// ── Canvas ──
+const canvas = document.getElementById('bgCanvas');
+const ctx = canvas.getContext('2d');
+let w, h, pts = [];
+let particleRgb = [0,255,229];
+
+function updateParticleColor() {
+  const raw = getComputedStyle(document.body).getPropertyValue('--ar').trim();
+  particleRgb = raw.split(',').map(n => parseInt(n.trim()));
+}
+
+function initCanvas() {
+  w = canvas.width = window.innerWidth;
+  h = canvas.height = window.innerHeight;
+  pts = Array.from({length:60}, () => ({
+    x: Math.random()*w, y: Math.random()*h,
+    vx: (Math.random()-0.5)*0.4, vy: (Math.random()-0.5)*0.4,
+    r: Math.random()*1.4+0.4
+  }));
+}
+
+function drawCanvas() {
+  ctx.fillStyle = "rgba(2,4,8,0.04)";
+  ctx.fillRect(0,0,w,h);
+  const [r,g,b] = particleRgb;
+  for (let i=0;i<pts.length;i++) {
+    for (let j=i+1;j<pts.length;j++) {
+      const dx=pts[i].x-pts[j].x, dy=pts[i].y-pts[j].y;
+      const dist=Math.sqrt(dx*dx+dy*dy);
+      if (dist<130) {
+        ctx.strokeStyle=`rgba(${r},${g},${b},${(1-dist/130)*0.13})`;
+        ctx.lineWidth=0.5;
+        ctx.beginPath(); ctx.moveTo(pts[i].x,pts[i].y); ctx.lineTo(pts[j].x,pts[j].y); ctx.stroke();
+      }
+    }
+  }
+  ctx.fillStyle=`rgba(${r},${g},${b},0.55)`;
+  pts.forEach(p => {
+    p.x+=p.vx; p.y+=p.vy;
+    if(p.x<0||p.x>w)p.vx*=-1; if(p.y<0||p.y>h)p.vy*=-1;
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
+  });
+  if (currentMood==='chaos' && Math.random()<0.02) {
+    const cols=[[255,0,255],[0,255,255],[255,60,0],[255,215,0]];
+    particleRgb=cols[Math.floor(Math.random()*cols.length)];
+    setTimeout(updateParticleColor,300);
+  }
+  requestAnimationFrame(drawCanvas);
+}
+
+window.onresize = initCanvas;
+initCanvas(); updateParticleColor(); drawCanvas();
+</script>
+</body>
+</html>

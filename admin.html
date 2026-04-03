@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TITAN // ADMIN</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+
+  :root {
+    --bg: #030308;
+    --panel: #0a0a14;
+    --border: #1a1a2e;
+    --accent: #00ffe5;
+    --red: #ff2a2a;
+    --yellow: #ffe600;
+    --green: #00ff88;
+    --purple: #b400ff;
+    --text: #c8d6e5;
+    --dim: #4a5568;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,229,0.02) 2px, rgba(0,255,229,0.02) 4px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  header {
+    position: relative;
+    padding: 24px 32px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(0,255,229,0.03);
+  }
+
+  .logo {
+    font-family: 'Orbitron', monospace;
+    font-weight: 900;
+    font-size: 1.4rem;
+    color: var(--accent);
+    letter-spacing: 6px;
+    text-shadow: 0 0 20px rgba(0,255,229,0.6);
+  }
+
+  .logo span { color: var(--red); }
+
+  .key-input-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  input[type="text"], input[type="password"] {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--accent);
+    padding: 8px 14px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.85rem;
+    outline: none;
+    transition: border 0.2s;
+  }
+  input:focus { border-color: var(--accent); }
+
+  button {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.8rem;
+    padding: 8px 16px;
+    cursor: pointer;
+    border: 1px solid;
+    background: transparent;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+  }
+
+  .btn-cyan { color: var(--accent); border-color: var(--accent); }
+  .btn-cyan:hover { background: rgba(0,255,229,0.1); box-shadow: 0 0 12px rgba(0,255,229,0.3); }
+  .btn-red { color: var(--red); border-color: var(--red); }
+  .btn-red:hover { background: rgba(255,42,42,0.1); }
+  .btn-green { color: var(--green); border-color: var(--green); }
+  .btn-green:hover { background: rgba(0,255,136,0.1); }
+  .btn-yellow { color: var(--yellow); border-color: var(--yellow); }
+  .btn-yellow:hover { background: rgba(255,230,0,0.1); }
+  .btn-purple { color: var(--purple); border-color: var(--purple); }
+  .btn-purple:hover { background: rgba(180,0,255,0.1); }
+
+  main {
+    position: relative;
+    padding: 32px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    z-index: 1;
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 24px;
+    position: relative;
+  }
+
+  .panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 40px; height: 2px;
+    background: var(--accent);
+  }
+
+  .panel-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 4px;
+    color: var(--accent);
+    margin-bottom: 20px;
+    text-transform: uppercase;
+  }
+
+  .panel-full { grid-column: 1 / -1; }
+
+  .form-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+
+  select {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 12px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.85rem;
+    outline: none;
+  }
+
+  .key-list, .session-list, .chat-log {
+    max-height: 300px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent) transparent;
+  }
+
+  .key-item, .session-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    margin-bottom: 6px;
+    font-size: 0.8rem;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .tier-badge {
+    padding: 2px 8px;
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    font-family: 'Orbitron', monospace;
+  }
+  .tier-free { color: var(--dim); border: 1px solid var(--dim); }
+  .tier-premium { color: var(--yellow); border: 1px solid var(--yellow); }
+  .tier-admin { color: var(--red); border: 1px solid var(--red); }
+
+  .status-banned { color: var(--red); }
+  .status-ok { color: var(--green); }
+
+  .chat-msg {
+    padding: 8px 12px;
+    margin-bottom: 4px;
+    font-size: 0.8rem;
+    border-left: 2px solid;
+  }
+  .chat-msg.user { border-color: var(--accent); }
+  .chat-msg.assistant { border-color: var(--purple); }
+
+  .key-val {
+    color: var(--accent);
+    font-size: 0.85rem;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--panel);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    padding: 12px 20px;
+    font-size: 0.85rem;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+  .toast.error { border-color: var(--red); color: var(--red); }
+
+  #login-screen {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .login-box {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 40px;
+    text-align: center;
+    min-width: 340px;
+  }
+
+  .login-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.2rem;
+    color: var(--accent);
+    letter-spacing: 6px;
+    margin-bottom: 8px;
+    text-shadow: 0 0 20px rgba(0,255,229,0.5);
+  }
+
+  .login-sub {
+    color: var(--dim);
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    margin-bottom: 24px;
+  }
+
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 16px 0;
+  }
+
+  .session-id-input {
+    font-size: 0.75rem;
+    width: 200px;
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-title">TITAN</div>
+    <div class="login-sub">// ADMIN ACCESS //</div>
+    <div class="form-row" style="justify-content:center">
+      <input type="password" id="login-key" placeholder="Enter admin key..." style="width:220px"/>
+      <button class="btn-cyan" onclick="login()">ENTER</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<header>
+  <div class="logo">TITAN <span>//</span> ADMIN</div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <span style="color:var(--dim);font-size:0.75rem">KEY:</span>
+    <span id="admin-key-display" style="color:var(--accent);font-size:0.8rem"></span>
+  </div>
+</header>
+
+<main>
+
+  <!-- KEY MANAGER -->
+  <div class="panel">
+    <div class="panel-title">// KEY MANAGER</div>
+    <div class="form-row">
+      <select id="gen-tier">
+        <option value="premium">PREMIUM</option>
+        <option value="free">FREE</option>
+        <option value="admin">ADMIN</option>
+      </select>
+      <input type="text" id="gen-label" placeholder="Label (optional)" style="flex:1"/>
+      <button class="btn-green" onclick="generateKey()">+ GEN KEY</button>
+    </div>
+    <div class="key-list" id="key-list">
+      <div style="color:var(--dim);font-size:0.8rem">Loading keys...</div>
+    </div>
+  </div>
+
+  <!-- SESSION MONITOR -->
+  <div class="panel">
+    <div class="panel-title">// LIVE SESSIONS</div>
+    <div class="form-row">
+      <button class="btn-cyan" onclick="loadSessions()" style="width:100%">↻ REFRESH SESSIONS</button>
+    </div>
+    <div class="session-list" id="session-list">
+      <div style="color:var(--dim);font-size:0.8rem">Click refresh to load...</div>
+    </div>
+  </div>
+
+  <!-- ABUSE PANEL -->
+  <div class="panel panel-full">
+    <div class="panel-title">// ADMIN ABUSE PANEL ⚡</div>
+    <div class="form-row">
+      <input type="text" class="session-id-input" id="target-session" placeholder="Session ID..."/>
+
+      <button class="btn-red" onclick="banUser(true)">🔴 BAN</button>
+      <button class="btn-green" onclick="banUser(false)">🟢 UNBAN</button>
+
+      <select id="force-mode">
+        <option value="TITAN">TITAN</option>
+        <option value="SAGE">SAGE</option>
+        <option value="CHAOS">CHAOS</option>
+        <option value="GHOST">GHOST</option>
+        <option value="VERSE">VERSE</option>
+        <option value="NOVA">NOVA</option>
+        <option value="SHADOW">SHADOW</option>
+      </select>
+      <button class="btn-yellow" onclick="forceMode()">⚡ FORCE MODE</button>
+    </div>
+
+    <div class="form-row">
+      <input type="text" id="fake-msg" placeholder="Fake message to inject..." style="flex:1"/>
+      <button class="btn-purple" onclick="sendFake()">👻 INJECT MSG</button>
+      <button class="btn-cyan" onclick="readChats()">👁 READ CHATS</button>
+    </div>
+
+    <div class="chat-log" id="chat-log" style="margin-top:16px;display:none">
+    </div>
+  </div>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let ADMIN_KEY = '';
+
+function login() {
+  const key = document.getElementById('login-key').value.trim();
+  if (!key) return showToast('Enter a key', true);
+  ADMIN_KEY = key;
+  document.getElementById('admin-key-display').textContent = key;
+  document.getElementById('login-screen').style.display = 'none';
+  loadKeys();
+}
+
+function headers() {
+  return { 'Content-Type': 'application/json', 'x-admin-key': ADMIN_KEY };
+}
+
+function showToast(msg, isError = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError ? ' error' : '');
+  setTimeout(() => t.className = 'toast', 2500);
+}
+
+async function loadKeys() {
+  const res = await fetch('/admin/keys', { headers: headers() });
+  if (!res.ok) return showToast('Admin auth failed', true);
+  const keys = await res.json();
+  const list = document.getElementById('key-list');
+  list.innerHTML = '';
+  for (const [k, v] of Object.entries(keys)) {
+    const div = document.createElement('div');
+    div.className = 'key-item';
+    div.innerHTML = `
+      <span class="key-val">${k}</span>
+      <span class="tier-badge tier-${v.tier}">${v.tier.toUpperCase()}</span>
+      <span style="color:var(--dim);font-size:0.75rem;flex:1">${v.label || ''}</span>
+      <button class="btn-red" style="padding:4px 10px;font-size:0.75rem" onclick="deleteKey('${k}')">✕</button>
+    `;
+    list.appendChild(div);
+  }
+}
+
+async function generateKey() {
+  const tier = document.getElementById('gen-tier').value;
+  const label = document.getElementById('gen-label').value;
+  const res = await fetch('/admin/keys/generate', {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify({ tier, label })
+  });
+  const data = await res.json();
+  if (data.key) {
+    showToast('Generated: ' + data.key);
+    document.getElementById('gen-label').value = '';
+    loadKeys();
+  }
+}
+
+async function deleteKey(key) {
+  if (!confirm('Delete key: ' + key + '?')) return;
+  await fetch('/admin/keys/' + encodeURIComponent(key), { method: 'DELETE', headers: headers() });
+  showToast('Key deleted');
+  loadKeys();
+}
+
+async function loadSessions() {
+  const res = await fetch('/admin/sessions', { headers: headers() });
+  const sessions = await res.json();
+  const list = document.getElementById('session-list');
+  list.innerHTML = '';
+  const entries = Object.entries(sessions);
+  if (!entries.length) { list.innerHTML = '<div style="color:var(--dim);font-size:0.8rem">No active sessions</div>'; return; }
+  for (const [sid, s] of entries) {
+    const div = document.createElement('div');
+    div.className = 'session-item';
+    div.innerHTML = `
+      <span style="color:var(--dim);font-size:0.75rem;overflow:hidden;text-overflow:ellipsis;max-width:140px">${sid}</span>
+      <span class="tier-badge tier-${s.tier||'free'}">${(s.tier||'free').toUpperCase()}</span>
+      <span style="color:var(--accent);font-size:0.75rem">${s.mode||'TITAN'}</span>
+      <span class="${s.banned ? 'status-banned' : 'status-ok'}">${s.banned ? '🔴 BANNED' : '🟢 OK'}</span>
+      <button class="btn-cyan" style="padding:3px 8px;font-size:0.7rem" onclick="document.getElementById('target-session').value='${sid}'">SELECT</button>
+    `;
+    list.appendChild(div);
+  }
+}
+
+async function banUser(banned) {
+  const sid = document.getElementById('target-session').value.trim();
+  if (!sid) return showToast('Enter a session ID', true);
+  await fetch('/admin/ban/' + sid, { method: 'POST', headers: headers(), body: JSON.stringify({ banned }) });
+  showToast(banned ? '🔴 User banned' : '🟢 User unbanned');
+  loadSessions();
+}
+
+async function forceMode() {
+  const sid = document.getElementById('target-session').value.trim();
+  const mode = document.getElementById('force-mode').value;
+  if (!sid) return showToast('Enter a session ID', true);
+  await fetch('/admin/forcemode/' + sid, { method: 'POST', headers: headers(), body: JSON.stringify({ mode }) });
+  showToast('⚡ Forced mode: ' + mode);
+}
+
+async function sendFake() {
+  const sid = document.getElementById('target-session').value.trim();
+  const message = document.getElementById('fake-msg').value.trim();
+  if (!sid || !message) return showToast('Enter session ID and message', true);
+  await fetch('/admin/fakemsg/' + sid, { method: 'POST', headers: headers(), body: JSON.stringify({ message }) });
+  showToast('👻 Fake message injected');
+  document.getElementById('fake-msg').value = '';
+}
+
+async function readChats() {
+  const sid = document.getElementById('target-session').value.trim();
+  if (!sid) return showToast('Enter a session ID', true);
+  const res = await fetch('/admin/chats/' + sid, { headers: headers() });
+  const chats = await res.json();
+  const log = document.getElementById('chat-log');
+  log.style.display = 'block';
+  log.innerHTML = '';
+  if (!chats.length) { log.innerHTML = '<div style="color:var(--dim);font-size:0.8rem">No chats found</div>'; return; }
+  for (const msg of chats) {
+    const div = document.createElement('div');
+    div.className = 'chat-msg ' + msg.role;
+    div.innerHTML = `<span style="color:var(--dim);font-size:0.7rem">${msg.role.toUpperCase()} · ${new Date(msg.ts).toLocaleTimeString()}</span><br>${msg.content}`;
+    log.appendChild(div);
+  }
+}
+</script>
+</body>
+</html>

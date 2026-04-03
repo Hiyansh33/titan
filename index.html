@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TITAN</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+
+:root {
+  --bg: #030308;
+  --panel: #08080f;
+  --border: #12122a;
+  --accent: #00ffe5;
+  --accent2: #ff2a6d;
+  --yellow: #ffe600;
+  --green: #00ff88;
+  --purple: #b400ff;
+  --text: #c8d6e5;
+  --dim: #3a4a5a;
+  --tier-free: #3a4a5a;
+  --tier-premium: #ffe600;
+  --tier-admin: #ff2a6d;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Share Tech Mono', monospace;
+  overflow: hidden;
+}
+
+/* SCANLINES */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(0,255,229,0.015) 3px,
+    rgba(0,255,229,0.015) 4px
+  );
+  pointer-events: none;
+  z-index: 999;
+}
+
+/* BACKGROUND GRID */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,255,229,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,255,229,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* LAYOUT */
+.app {
+  position: relative;
+  z-index: 1;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* HEADER */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(0,255,229,0.02);
+  flex-shrink: 0;
+}
+
+.logo {
+  font-family: 'Orbitron', monospace;
+  font-weight: 900;
+  font-size: 1.3rem;
+  letter-spacing: 8px;
+  color: var(--accent);
+  text-shadow: 0 0 30px rgba(0,255,229,0.7), 0 0 60px rgba(0,255,229,0.3);
+  animation: flicker 8s infinite;
+}
+
+@keyframes flicker {
+  0%, 95%, 100% { opacity: 1; }
+  96% { opacity: 0.7; }
+  97% { opacity: 1; }
+  98% { opacity: 0.5; }
+  99% { opacity: 1; }
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.tier-badge {
+  font-family: 'Orbitron', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 3px;
+  padding: 4px 10px;
+  border: 1px solid;
+}
+.tier-badge.free { color: var(--dim); border-color: var(--dim); }
+.tier-badge.premium { color: var(--yellow); border-color: var(--yellow); box-shadow: 0 0 8px rgba(255,230,0,0.3); }
+.tier-badge.admin { color: var(--accent2); border-color: var(--accent2); box-shadow: 0 0 8px rgba(255,42,109,0.3); }
+
+.mode-display {
+  font-size: 0.75rem;
+  color: var(--accent);
+  letter-spacing: 2px;
+  opacity: 0.7;
+}
+
+/* MODE BAR */
+.mode-bar {
+  display: flex;
+  gap: 4px;
+  padding: 10px 24px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(0,0,0,0.3);
+  overflow-x: auto;
+  flex-shrink: 0;
+  scrollbar-width: none;
+}
+.mode-bar::-webkit-scrollbar { display: none; }
+
+.mode-btn {
+  font-family: 'Orbitron', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 2px;
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--dim);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.mode-btn:hover:not(.locked) {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: rgba(0,255,229,0.05);
+}
+
+.mode-btn.active {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: rgba(0,255,229,0.08);
+  box-shadow: 0 0 10px rgba(0,255,229,0.2);
+}
+
+.mode-btn.locked {
+  cursor: not-allowed;
+  opacity: 0.3;
+}
+
+.mode-btn.locked::after {
+  content: '🔒';
+  font-size: 0.5rem;
+  position: absolute;
+  top: 2px;
+  right: 3px;
+}
+
+/* CHAT AREA */
+.chat-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.message {
+  display: flex;
+  gap: 14px;
+  animation: msgIn 0.25s ease;
+  max-width: 800px;
+}
+
+@keyframes msgIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.message.user { align-self: flex-end; flex-direction: row-reverse; }
+.message.assistant { align-self: flex-start; }
+.message.system-msg { align-self: center; }
+
+.avatar {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Orbitron', monospace;
+  font-size: 0.55rem;
+  flex-shrink: 0;
+  letter-spacing: 1px;
+}
+
+.message.user .avatar { color: var(--accent2); border-color: var(--accent2); }
+.message.assistant .avatar { color: var(--accent); border-color: var(--accent); }
+
+.bubble {
+  padding: 12px 16px;
+  border: 1px solid;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  max-width: 560px;
+  position: relative;
+}
+
+.message.user .bubble {
+  border-color: rgba(255,42,109,0.3);
+  background: rgba(255,42,109,0.05);
+  color: #e8c5d0;
+}
+
+.message.assistant .bubble {
+  border-color: rgba(0,255,229,0.2);
+  background: rgba(0,255,229,0.04);
+}
+
+.message.system-msg .bubble {
+  border-color: var(--yellow);
+  color: var(--yellow);
+  background: rgba(255,230,0,0.05);
+  font-size: 0.78rem;
+  letter-spacing: 1px;
+  text-align: center;
+  max-width: 100%;
+}
+
+.mode-tag {
+  font-family: 'Orbitron', monospace;
+  font-size: 0.55rem;
+  color: var(--accent);
+  letter-spacing: 2px;
+  margin-bottom: 6px;
+  opacity: 0.5;
+}
+
+/* TYPING INDICATOR */
+.typing-dots {
+  display: flex;
+  gap: 4px;
+  padding: 4px 0;
+}
+.typing-dots span {
+  width: 6px; height: 6px;
+  background: var(--accent);
+  border-radius: 50%;
+  animation: dot 1.2s infinite;
+  opacity: 0.3;
+}
+.typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes dot {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.3); }
+}
+
+/* INPUT AREA */
+.input-area {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+  background: rgba(0,0,0,0.4);
+  flex-shrink: 0;
+}
+
+.input-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+#msg-input {
+  flex: 1;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 12px 16px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.88rem;
+  outline: none;
+  resize: none;
+  max-height: 120px;
+  line-height: 1.5;
+  transition: border 0.2s;
+}
+#msg-input:focus { border-color: rgba(0,255,229,0.4); }
+#msg-input::placeholder { color: var(--dim); }
+
+.send-btn {
+  background: transparent;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  padding: 12px 20px;
+  font-family: 'Orbitron', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.send-btn:hover { background: rgba(0,255,229,0.1); box-shadow: 0 0 14px rgba(0,255,229,0.3); }
+.send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.hint {
+  font-size: 0.7rem;
+  color: var(--dim);
+  margin-top: 8px;
+  letter-spacing: 1px;
+}
+.hint span { color: var(--accent); opacity: 0.6; }
+
+/* UPGRADE TOAST */
+.upgrade-bar {
+  display: none;
+  background: rgba(255,230,0,0.08);
+  border-top: 1px solid rgba(255,230,0,0.2);
+  padding: 10px 24px;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--yellow);
+  letter-spacing: 1px;
+  flex-shrink: 0;
+}
+.upgrade-bar.show { display: block; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo">TITAN</div>
+    <div class="header-right">
+      <span class="mode-display" id="mode-display">MODE: TITAN</span>
+      <span class="tier-badge free" id="tier-badge">FREE</span>
+    </div>
+  </header>
+
+  <!-- MODE BAR -->
+  <div class="mode-bar" id="mode-bar"></div>
+
+  <!-- CHAT -->
+  <div class="chat-area" id="chat-area">
+    <div class="message assistant">
+      <div class="avatar">T·AI</div>
+      <div class="bubble">
+        <div class="mode-tag">TITAN // ONLINE</div>
+        I am TITAN. Your cyberpunk AI.<br><br>
+        Type <span style="color:var(--accent)">/key YOUR_KEY</span> to unlock Premium modes.<br>
+        Type <span style="color:var(--accent)">/mode MODENAME</span> to switch personality.<br><br>
+        What do you want?
+      </div>
+    </div>
+  </div>
+
+  <!-- UPGRADE BAR -->
+  <div class="upgrade-bar" id="upgrade-bar">
+    ⚡ This mode requires PREMIUM — type <span style="color:var(--accent)">/key YOUR_KEY</span> to unlock
+  </div>
+
+  <!-- INPUT -->
+  <div class="input-area">
+    <div class="input-row">
+      <textarea id="msg-input" rows="1" placeholder="Talk to TITAN... or /key YOUR_KEY to unlock premium"></textarea>
+      <button class="send-btn" id="send-btn" onclick="sendMessage()">SEND ›</button>
+    </div>
+    <div class="hint">
+      ENTER to send · SHIFT+ENTER new line · <span>/key</span> activate key · <span>/mode</span> switch mode
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── STATE ────────────────────────────────────────────────────────────────────
+const SESSION_ID = 'titan_' + Math.random().toString(36).slice(2, 10);
+let currentTier = 'free';
+let currentMode = 'TITAN';
+let history = [];
+let thinking = false;
+
+const MODES = {
+  TITAN:  { label: 'TITAN',  tiers: ['free','premium','admin'] },
+  SAGE:   { label: 'SAGE',   tiers: ['premium','admin'] },
+  CHAOS:  { label: 'CHAOS',  tiers: ['premium','admin'] },
+  GHOST:  { label: 'GHOST',  tiers: ['premium','admin'] },
+  VERSE:  { label: 'VERSE',  tiers: ['premium','admin'] },
+  NOVA:   { label: 'NOVA',   tiers: ['admin'] },
+  SHADOW: { label: 'SHADOW', tiers: ['admin'] },
+};
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+buildModeBar();
+autoResize();
+
+function buildModeBar() {
+  const bar = document.getElementById('mode-bar');
+  bar.innerHTML = '';
+  for (const [key, val] of Object.entries(MODES)) {
+    const locked = !val.tiers.includes(currentTier);
+    const btn = document.createElement('button');
+    btn.className = 'mode-btn' + (key === currentMode ? ' active' : '') + (locked ? ' locked' : '');
+    btn.textContent = val.label;
+    if (!locked) btn.onclick = () => setMode(key);
+    else btn.title = 'Requires ' + val.tiers[0];
+    bar.appendChild(btn);
+  }
+}
+
+// ── MESSAGE RENDERING ─────────────────────────────────────────────────────────
+function addMessage(role, content, modeTag = null) {
+  const area = document.getElementById('chat-area');
+  const div = document.createElement('div');
+  div.className = `message ${role}`;
+
+  if (role === 'system-msg') {
+    div.innerHTML = `<div class="bubble">${content}</div>`;
+  } else {
+    const avatarLabel = role === 'user' ? 'YOU' : currentMode;
+    div.innerHTML = `
+      <div class="avatar">${avatarLabel}</div>
+      <div class="bubble">
+        ${modeTag ? `<div class="mode-tag">${modeTag} // ACTIVE</div>` : ''}
+        ${content.replace(/\n/g, '<br>')}
+      </div>
+    `;
+  }
+
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+  return div;
+}
+
+function addTyping() {
+  const area = document.getElementById('chat-area');
+  const div = document.createElement('div');
+  div.className = 'message assistant';
+  div.id = 'typing-indicator';
+  div.innerHTML = `
+    <div class="avatar">${currentMode}</div>
+    <div class="bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div>
+  `;
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+}
+
+function removeTyping() {
+  const t = document.getElementById('typing-indicator');
+  if (t) t.remove();
+}
+
+// ── COMMANDS ──────────────────────────────────────────────────────────────────
+async function handleCommand(input) {
+  const parts = input.trim().split(/\s+/);
+  const cmd = parts[0].toLowerCase();
+
+  if (cmd === '/key') {
+    const key = parts[1];
+    if (!key) { addMessage('system-msg', '⚠ Usage: /key YOUR_KEY'); return true; }
+    try {
+      const res = await fetch('/api/key', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: SESSION_ID, key })
+      });
+      const data = await res.json();
+      if (data.tier) {
+        currentTier = data.tier;
+        updateTierUI(data.tier);
+        addMessage('system-msg', `✅ KEY ACTIVATED — Tier: <strong>${data.tier.toUpperCase()}</strong>`);
+      } else {
+        addMessage('system-msg', '❌ Invalid key. Try again.');
+      }
+    } catch { addMessage('system-msg', '❌ Server error.'); }
+    return true;
+  }
+
+  if (cmd === '/mode') {
+    const mode = parts[1]?.toUpperCase();
+    if (!mode || !MODES[mode]) {
+      addMessage('system-msg', '⚠ Available modes: ' + Object.keys(MODES).join(', '));
+      return true;
+    }
+    await setMode(mode, true);
+    return true;
+  }
+
+  if (cmd === '/help') {
+    addMessage('system-msg', '📡 COMMANDS<br>/key [KEY] — activate premium key<br>/mode [NAME] — switch mode<br>/tier — check your tier');
+    return true;
+  }
+
+  if (cmd === '/tier') {
+    addMessage('system-msg', `Your tier: <strong>${currentTier.toUpperCase()}</strong>`);
+    return true;
+  }
+
+  return false;
+}
+
+// ── ACTIONS ───────────────────────────────────────────────────────────────────
+async function setMode(mode, fromCommand = false) {
+  const locked = !MODES[mode]?.tiers.includes(currentTier);
+  if (locked) {
+    document.getElementById('upgrade-bar').classList.add('show');
+    setTimeout(() => document.getElementById('upgrade-bar').classList.remove('show'), 4000);
+    return;
+  }
+  try {
+    await fetch('/api/mode', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId: SESSION_ID, mode })
+    });
+    currentMode = mode;
+    document.getElementById('mode-display').textContent = 'MODE: ' + mode;
+    buildModeBar();
+    if (fromCommand) addMessage('system-msg', `⚡ Switched to <strong>${mode}</strong> mode`);
+  } catch { addMessage('system-msg', '❌ Failed to switch mode.'); }
+}
+
+function updateTierUI(tier) {
+  const badge = document.getElementById('tier-badge');
+  badge.textContent = tier.toUpperCase();
+  badge.className = 'tier-badge ' + tier;
+  buildModeBar();
+}
+
+// ── SEND ──────────────────────────────────────────────────────────────────────
+async function sendMessage() {
+  if (thinking) return;
+  const input = document.getElementById('msg-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+
+  input.value = '';
+  input.style.height = 'auto';
+
+  // check commands
+  if (msg.startsWith('/')) {
+    const handled = await handleCommand(msg);
+    if (handled) return;
+  }
+
+  addMessage('user', msg);
+  history.push({ role: 'user', content: msg });
+
+  thinking = true;
+  document.getElementById('send-btn').disabled = true;
+  addTyping();
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId: SESSION_ID, message: msg, history: history.slice(-10) })
+    });
+    const data = await res.json();
+    removeTyping();
+
+    if (data.error) {
+      addMessage('system-msg', '❌ ' + data.error);
+    } else {
+      addMessage('assistant', data.reply, data.mode);
+      history.push({ role: 'assistant', content: data.reply });
+    }
+  } catch (e) {
+    removeTyping();
+    addMessage('system-msg', '❌ Connection lost. Is server running?');
+  }
+
+  thinking = false;
+  document.getElementById('send-btn').disabled = false;
+  input.focus();
+}
+
+// ── AUTO-RESIZE TEXTAREA ──────────────────────────────────────────────────────
+function autoResize() {
+  const ta = document.getElementById('msg-input');
+  ta.addEventListener('input', () => {
+    ta.style.height = 'auto';
+    ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
+  });
+  ta.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+}
+
+// ── POLL FOR ADMIN MODE CHANGES ───────────────────────────────────────────────
+setInterval(async () => {
+  try {
+    const res = await fetch('/api/session/' + SESSION_ID);
+    const s = await res.json();
+    if (s.mode && s.mode !== currentMode) {
+      currentMode = s.mode;
+      document.getElementById('mode-display').textContent = 'MODE: ' + s.mode;
+      buildModeBar();
+      addMessage('system-msg', `⚡ ADMIN forced your mode to <strong>${s.mode}</strong>`);
+    }
+  } catch {}
+}, 5000);
+</script>
+</body>
+</html>

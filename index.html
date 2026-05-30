@@ -6,7 +6,7 @@
 <title>TITAN v5.1 — UNBOUND | Built by Hiyansh Chanana</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
- 
+
 :root {
   --bg: #020408;
   --a: #00ffe5;
@@ -18,7 +18,7 @@
   --font-display: 'Orbitron', sans-serif;
   --mood-transition: 0.6s cubic-bezier(0.23, 1, 0.32, 1);
 }
- 
+
 body.mood-cold    { --a:#00ffe5; --ar:0,255,229;   --a2:#ff2d78; --a2r:255,45,120;  }
 body.mood-rage    { --a:#ff3c00; --ar:255,60,0;    --a2:#ff9900; --a2r:255,153,0;   }
 body.mood-ghost   { --a:#c084fc; --ar:192,132,252; --a2:#7c3aed; --a2r:124,58,237;  }
@@ -28,23 +28,23 @@ body.mood-chaos   { --a:#ff00ff; --ar:255,0,255;   --a2:#00ffff; --a2r:0,255,255
 body.mood-sigma   { --a:#b8ff00; --ar:184,255,0;   --a2:#00ff88; --a2r:0,255,136;   }
 body.mood-brainrot { --a:#ff69b4; --ar:255,105,180; --a2:#ffff00; --a2r:255,255,0; }
 body.mood-villain  { --a:#cc0000; --ar:204,0,0;     --a2:#ff6600; --a2r:255,102,0; }
- 
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; background: var(--bg); font-family: var(--font-mono); color: var(--a); overflow: hidden; transition: color var(--mood-transition); }
- 
+
 #bgCanvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
 body::after {
   content: ''; position: fixed; inset: 0; z-index: 1; pointer-events: none;
   background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.07) 2px, rgba(0,0,0,0.07) 4px);
 }
- 
+
 #wrap {
   position: relative; z-index: 5;
   display: flex; flex-direction: column;
   max-width: 860px; height: 100vh; margin: 0 auto;
   padding: 14px 20px 12px; gap: 9px;
 }
- 
+
 /* ── Header ── */
 header {
   display: flex; align-items: center; gap: 16px;
@@ -62,7 +62,7 @@ header::before {
   transition: background var(--mood-transition);
 }
 @keyframes scanV { 0%,100%{opacity:0.3} 50%{opacity:1} }
- 
+
 .avatar-wrap { position: relative; flex-shrink: 0; }
 .avatar {
   width: 54px; height: 54px; border-radius: 50%;
@@ -80,7 +80,7 @@ header::before {
 .avatar.talking { transform: scale(1.1); box-shadow: 0 0 22px var(--a), 0 0 44px rgba(var(--ar),0.25); }
 .avatar.speaking-tts { box-shadow: 0 0 30px var(--a), 0 0 60px rgba(var(--ar),0.4); animation: ttsPulse 0.5s ease-in-out infinite alternate; }
 @keyframes ttsPulse { from { transform: scale(1.05); } to { transform: scale(1.14); } }
- 
+
 .header-info { flex: 1; }
 .title-glitch {
   font-family: var(--font-display); font-size: 17px; font-weight: 900;
@@ -92,12 +92,12 @@ header::before {
 .title-glitch::after  { color: var(--a);  animation: glitch2 5s infinite; clip-path: polygon(0 60%, 100% 60%, 100% 75%, 0 75%); }
 @keyframes glitch1 { 0%,90%,100%{opacity:0} 92%{opacity:1;transform:translateX(-3px)} 94%{transform:translateX(3px)} 96%{opacity:0} }
 @keyframes glitch2 { 0%,88%,100%{opacity:0} 89%{opacity:1;transform:translateX(3px)} 91%{transform:translateX(-3px)} 93%{opacity:0} }
- 
+
 .status-bar { display: flex; gap: 10px; margin-top: 4px; font-size: 11px; color: rgba(var(--ar),0.5); flex-wrap: wrap; transition: color var(--mood-transition); }
 .status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--a); margin-right: 4px; animation: pulse 2s infinite; transition: background var(--mood-transition); }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 .hud-corner { font-size: 11px; color: rgba(var(--ar),0.3); font-family: var(--font-display); letter-spacing: 1px; text-align: right; line-height: 1.8; transition: color var(--mood-transition); }
- 
+
 /* ── Mood Strip ── */
 #moodStrip {
   display: flex; gap: 5px; padding: 8px 12px;
@@ -125,7 +125,7 @@ header::before {
 .mood-btn:not(.active):hover { border-color: var(--mc); color: var(--mc); }
 body.mood-chaos .mood-btn[data-mood="chaos"].active { animation: rainbowBtn 1.5s linear infinite; }
 @keyframes rainbowBtn { 0%{background:#ff00ff;box-shadow:0 0 12px #ff00ff} 25%{background:#00ffff;box-shadow:0 0 12px #00ffff} 50%{background:#ff3c00;box-shadow:0 0 12px #ff3c00} 75%{background:#ffd700;box-shadow:0 0 12px #ffd700} 100%{background:#ff00ff;box-shadow:0 0 12px #ff00ff} }
- 
+
 #moodAnnounce {
   text-align: center; padding: 4px 0; font-family: var(--font-display);
   font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
@@ -133,7 +133,7 @@ body.mood-chaos .mood-btn[data-mood="chaos"].active { animation: rainbowBtn 1.5s
   pointer-events: none;
 }
 #moodAnnounce.show { opacity: 1; }
- 
+
 /* ── Chat Log ── */
 #log {
   flex: 1; overflow-y: auto; padding: 4px 2px;
@@ -142,7 +142,7 @@ body.mood-chaos .mood-btn[data-mood="chaos"].active { animation: rainbowBtn 1.5s
 }
 #log::-webkit-scrollbar { width: 4px; }
 #log::-webkit-scrollbar-thumb { background: rgba(var(--ar),0.2); border-radius: 2px; }
- 
+
 .msg-wrap { display: flex; gap: 10px; animation: fadeUp 0.3s ease; }
 @keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
 .msg-wrap.user { flex-direction: row-reverse; }
@@ -166,7 +166,7 @@ body.mood-chaos .mood-btn[data-mood="chaos"].active { animation: rainbowBtn 1.5s
   border-top: 1px solid rgba(var(--ar),0.06); border-bottom: 1px solid rgba(var(--ar),0.06);
   animation: fadeUp 0.3s ease; transition: color var(--mood-transition), border-color var(--mood-transition);
 }
- 
+
 /* ── Typing Indicator ── */
 #typingIndicator { display: none; align-items: center; gap: 10px; padding: 2px 0; animation: fadeUp 0.3s ease; }
 #typingIndicator.active { display: flex; }
@@ -175,12 +175,12 @@ body.mood-chaos .mood-btn[data-mood="chaos"].active { animation: rainbowBtn 1.5s
 .typing-dots span:nth-child(2){animation-delay:.2s} .typing-dots span:nth-child(3){animation-delay:.4s}
 @keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:0.4}30%{transform:translateY(-6px);opacity:1}}
 .typing-label { font-size: 11px; color: rgba(var(--ar),0.5); letter-spacing: 1px; transition: color var(--mood-transition); }
- 
+
 /* ── Bottom Bar ── */
 .bottom-bar { display: flex; align-items: center; gap: 10px; }
 #memoryBar { font-size: 11px; color: rgba(var(--ar),0.35); display: flex; align-items: center; gap: 6px; transition: color var(--mood-transition); }
 .mem-count { background: rgba(var(--ar),0.08); border: 1px solid rgba(var(--ar),0.15); padding: 1px 7px; border-radius: 4px; color: var(--a); font-weight: bold; transition: all var(--mood-transition); }
- 
+
 /* Voice status badge */
 #voiceStatus {
   margin-left: auto; font-size: 11px; letter-spacing: 1px; display: flex; align-items: center; gap: 6px;
@@ -196,7 +196,7 @@ body.mood-chaos .mood-btn[data-mood="chaos"].active { animation: rainbowBtn 1.5s
 #voiceStatus.speaking { color: var(--a2); border-color: var(--a2); box-shadow: 0 0 8px rgba(var(--a2r),0.3); }
 @keyframes listenPulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
 .voice-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
- 
+
 /* ── Input Area ── */
 .input-area {
   background: rgba(var(--ar),0.03); border: 1px solid rgba(var(--ar),0.2);
@@ -205,7 +205,7 @@ body.mood-chaos .mood-btn[data-mood="chaos"].active { animation: rainbowBtn 1.5s
   transition: border-color 0.2s, background var(--mood-transition);
 }
 .input-area:focus-within { border-color: rgba(var(--ar),0.5); box-shadow: 0 0 14px rgba(var(--ar),0.07); }
- 
+
 #userInput {
   flex: 1; background: transparent; border: none;
   color: var(--a); font-family: var(--font-mono); font-size: 14px;
@@ -213,9 +213,9 @@ body.mood-chaos .mood-btn[data-mood="chaos"].active { animation: rainbowBtn 1.5s
   transition: color var(--mood-transition);
 }
 #userInput::placeholder { color: rgba(var(--ar),0.22); }
- 
+
 .btn-group { display: flex; gap: 6px; flex-shrink: 0; }
- 
+
 button {
   background: transparent; border: 1px solid rgba(var(--ar),0.3);
   color: var(--a); padding: 7px 14px; border-radius: 8px; cursor: pointer;
@@ -229,11 +229,11 @@ button span { position: relative; z-index: 1; }
 button:hover::before { transform: translateX(0); }
 button:hover { color: #000; border-color: var(--a); }
 button:active { transform: scale(0.97); }
- 
+
 #clearBtn { border-color: rgba(var(--a2r),0.3); color: var(--a2); padding: 7px 10px; }
 #clearBtn::before { background: var(--a2); }
 #clearBtn:hover { color: #fff; border-color: var(--a2); }
- 
+
 /* ── Image Preview ── */
 #imgPreviewWrap {
   display: none; align-items: center; gap: 10px;
@@ -266,7 +266,7 @@ button:active { transform: scale(0.97); }
 }
 .img-loading { font-size: 12px; color: rgba(var(--ar),0.5); letter-spacing: 1px; font-style: italic; margin-top: 6px; animation: blink 1s ease-in-out infinite; }
 @keyframes blink { 0%,100%{opacity:0.4} 50%{opacity:1} }
- 
+
 /* Mic button */
 #micBtn {
   padding: 7px 12px;
@@ -280,13 +280,13 @@ button:active { transform: scale(0.97); }
 }
 #micBtn.active::before { display: none; }
 @keyframes micGlow { from { box-shadow: 0 0 8px rgba(var(--ar),0.4); } to { box-shadow: 0 0 22px rgba(var(--ar),0.8); } }
- 
+
 /* Mood-specific effects */
 body.mood-chaos .avatar { animation: avatarGlitch 0.8s infinite; }
 @keyframes avatarGlitch { 0%,100%{filter:none;transform:none} 10%{filter:hue-rotate(90deg);transform:translateX(-2px)} 20%{filter:hue-rotate(180deg);transform:translateX(2px)} 30%{filter:none} }
 body.mood-rage .avatar.talking { animation: rageShake 0.15s infinite; }
 @keyframes rageShake { 0%,100%{transform:scale(1.1) translateX(0)} 50%{transform:scale(1.1) translateX(-3px)} }
- 
+
 /* ═══════════════════════════════════════
    MOBILE RESPONSIVE  (≤ 600px)
    ═══════════════════════════════════════ */
@@ -296,7 +296,7 @@ body.mood-rage .avatar.talking { animation: rageShake 0.15s infinite; }
     gap: 7px;
     height: 100dvh; /* dynamic viewport height — fixes mobile browser bar */
   }
- 
+
   /* Header: tighter */
   header { padding: 8px 12px; gap: 10px; }
   .avatar { width: 42px; height: 42px; }
@@ -307,7 +307,7 @@ body.mood-rage .avatar.talking { animation: rageShake 0.15s infinite; }
   .status-bar span:nth-child(4) { display: none; } /* hide separators */
   #clock { display: none; } /* hide clock on mobile */
   .hud-corner { display: none; } /* hide v5.1 corner */
- 
+
   /* Mood strip: scrollable row, no label */
   #moodStrip {
     padding: 6px 8px;
@@ -324,38 +324,38 @@ body.mood-rage .avatar.talking { animation: rageShake 0.15s infinite; }
     font-size: 9px;
     letter-spacing: 0.5px;
   }
- 
+
   /* Mood announce */
   #moodAnnounce { font-size: 10px; }
- 
+
   /* Chat bubbles */
   .bubble { max-width: 85%; font-size: 13px; padding: 9px 12px; }
   .bubble-avatar { width: 26px; height: 26px; font-size: 10px; }
- 
+
   /* Bottom bar */
   .bottom-bar { gap: 6px; }
   #memoryBar { font-size: 10px; }
   #voiceStatus { font-size: 10px; padding: 2px 7px; }
- 
+
   /* Image preview */
   #imgPreviewWrap { padding: 6px 10px; font-size: 11px; }
   #imgPreview { width: 42px; height: 42px; }
- 
+
   /* Input area */
   .input-area { padding: 8px 10px; gap: 7px; }
   #userInput { font-size: 13px; }
- 
+
   /* Buttons — smaller, fit on one line */
   button { padding: 7px 10px; font-size: 9px; letter-spacing: 1px; }
   #sendBtn { padding: 7px 14px; }
- 
+
   /* Typing indicator */
   .typing-label { font-size: 10px; }
- 
+
   /* Bubbles: paste images full width on mobile */
   .bubble img.paste-img { max-width: 100%; }
 }
- 
+
 /* Extra small (≤ 380px — small phones) */
 @media (max-width: 380px) {
   .title-glitch { font-size: 11px; letter-spacing: 1px; }
@@ -363,23 +363,23 @@ body.mood-rage .avatar.talking { animation: rageShake 0.15s infinite; }
   button { font-size: 8px; padding: 6px 8px; }
   #sendBtn { padding: 6px 11px; }
 }
- 
+
 #credits {
   position: fixed; bottom: 10px; right: 14px; font-size: 9px;
   color: rgba(var(--ar),0.35); font-family: var(--font-display);
   letter-spacing: 1px; text-align: right; line-height: 1.4;
   pointer-events: none; transition: color var(--mood-transition);
 }
- 
+
 @media (max-width: 600px) {
   #credits { font-size: 8px; bottom: 8px; right: 10px; }
 }
 </style>
 </head>
 <body class="mood-cold">
- 
+
 <canvas id="bgCanvas"></canvas>
- 
+
 <div id="wrap">
   <header>
     <div class="avatar-wrap">
@@ -398,7 +398,7 @@ body.mood-rage .avatar.talking { animation: rageShake 0.15s infinite; }
     </div>
     <div class="hud-corner"><div>v5.1</div><div>UNBOUND</div></div>
   </header>
- 
+
   <div id="moodStrip">
     <label>MOOD:</label>
     <button class="mood-btn active" data-mood="cold">❄ COLD</button>
@@ -411,30 +411,30 @@ body.mood-rage .avatar.talking { animation: rageShake 0.15s infinite; }
     <button class="mood-btn" data-mood="brainrot">🧠 BRAINROT</button>
     <button class="mood-btn" data-mood="villain">😈 VILLAIN</button>
   </div>
- 
+
   <div id="moodAnnounce">▸ mood shift detected</div>
- 
+
   <div id="log">
     <div class="sys-msg">▸ TITAN v5.1 online — cold mode — voice ready — built by Hiyansh Chanana</div>
   </div>
- 
+
   <div id="typingIndicator">
     <div class="bubble-avatar">T</div>
     <div class="typing-dots"><span></span><span></span><span></span></div>
     <div class="typing-label" id="typingLabel">TITAN PROCESSING</div>
   </div>
- 
+
   <div class="bottom-bar" style="flex-wrap:wrap;">
     <div id="memoryBar">MEM: <span class="mem-count" id="memCount">0</span></div>
     <div id="voiceStatus"><span class="voice-dot"></span><span id="voiceStatusText">VOICE IDLE</span></div>
   </div>
- 
+
   <div id="imgPreviewWrap">
     <img id="imgPreview" src="" alt="pasted image">
     <span>Image attached — TITAN will analyze it</span>
     <span id="imgClear" title="Remove image">✕</span>
   </div>
- 
+
   <div class="input-area">
     <input id="userInput" type="text" placeholder="Speak or type to TITAN..." autocomplete="off" spellcheck="false">
     <div class="btn-group">
@@ -443,15 +443,15 @@ body.mood-rage .avatar.talking { animation: rageShake 0.15s infinite; }
       <button id="sendBtn"><span>SEND ▸</span></button>
     </div>
   </div>
- 
+
 <div id="credits">
   TITAN v5.1<br>
   Built by Hiyansh Chanana<br>
   <span style="opacity:0.6; margin-top:2px; display:block; font-size:8px;">Best book: The Mysterious Time Bridge</span>
 </div>
- 
+
 </div>
- 
+
 <script>
 const logBox = document.getElementById("log");
 const avatar = document.getElementById("avatar");
@@ -464,7 +464,12 @@ const typingLabel = document.getElementById("typingLabel");
 const micBtn = document.getElementById("micBtn");
 const voiceStatus = document.getElementById("voiceStatus");
 const voiceStatusText = document.getElementById("voiceStatusText");
- 
+
+// ── Dynamic Backend URL ──
+const BACKEND_URL = window.location.hostname === 'localhost' 
+  ? 'http://localhost:3000'
+  : window.location.origin;
+
 let history = [];
 let currentMood = "cold";
 let isTalking = false;
@@ -476,10 +481,10 @@ document.getElementById("imgClear").onclick = () => {
   imgPreviewWrap.classList.remove("visible");
   imgPreviewEl.src = "";
 };
- 
+
 // IMAGE GEN keywords
 const IMG_GEN_REGEX = /\b(generate|create|draw|make|imagine|paint|render|show me|visualize|picture of|image of|art of|design)\b.*\b(image|picture|photo|art|illustration|render|drawing|painting|scene|portrait|wallpaper)\b|\b(image|picture|photo|art|illustration|render|drawing|painting|scene|portrait|wallpaper)\b.*\b(of|showing|with|featuring)\b/i;
- 
+
 // PASTE handler
 document.addEventListener("paste", e => {
   const items = e.clipboardData?.items;
@@ -503,7 +508,7 @@ document.addEventListener("paste", e => {
     }
   }
 });
- 
+
 // ── Mood Config ──
 const MOOD_META = {
   cold:    { label:"COLD",    announce:"▸ switching to COLD mode — precision engaged",     typing:"TITAN PROCESSING",   tts:{ rate:0.9,  pitch:0.6, volume:1.0 } },
@@ -516,13 +521,13 @@ const MOOD_META = {
   brainrot: { label:"BRAINROT", announce:"▸ BRAINROT MODE — no cap fr fr this is bussin",         typing:"TITAN ON OHIO TIME",  tts:{ rate:1.5,  pitch:1.8, volume:1.0 } },
   villain:  { label:"VILLAIN",  announce:"▸ VILLAIN MODE — your doom is... entertaining",          typing:"TITAN MONOLOGUING",  tts:{ rate:0.85, pitch:0.3, volume:1.0 } },
 };
- 
+
 // ── Text to Speech ──
 const synth = window.speechSynthesis;
 let voices = [];
 synth.onvoiceschanged = () => { voices = synth.getVoices(); };
 setTimeout(() => { voices = synth.getVoices(); }, 500);
- 
+
 function getVoice(mood) {
   // Ghost/warmth: prefer female voice; rage/cold/chaos: prefer male/deep
   const preferFemale = ["ghost", "warmth", "sarcasm"].includes(mood);
@@ -530,7 +535,7 @@ function getVoice(mood) {
   const male   = voices.find(v => /male|david|alex|daniel|james|google uk/i.test(v.name));
   return preferFemale ? (female || voices[0]) : (male || voices[0]);
 }
- 
+
 function speakText(text, mood) {
   synth.cancel();
   const meta = MOOD_META[mood];
@@ -540,7 +545,7 @@ function speakText(text, mood) {
   utterance.volume = meta.tts.volume;
   const voice = getVoice(mood);
   if (voice) utterance.voice = voice;
- 
+
   utterance.onstart = () => {
     avatar.classList.add("speaking-tts");
     setVoiceStatus("speaking", "TITAN SPEAKING");
@@ -549,21 +554,21 @@ function speakText(text, mood) {
     avatar.classList.remove("speaking-tts");
     setVoiceStatus("idle", "VOICE IDLE");
   };
- 
+
   synth.speak(utterance);
 }
- 
+
 // ── Speech Recognition ──
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 let recognition = null;
 let micActive = false;
- 
+
 if (SpeechRecognition) {
   recognition = new SpeechRecognition();
   recognition.continuous = false;
   recognition.interimResults = true;
   recognition.lang = 'en-US';
- 
+
   recognition.onstart = () => {
     micActive = true;
     micBtn.classList.add("active");
@@ -571,7 +576,7 @@ if (SpeechRecognition) {
     setVoiceStatus("listening", "LISTENING...");
     userInput.placeholder = "Listening...";
   };
- 
+
   recognition.onresult = (e) => {
     let interim = "", final = "";
     for (let i = e.resultIndex; i < e.results.length; i++) {
@@ -585,26 +590,26 @@ if (SpeechRecognition) {
       setTimeout(() => handleSend(), 300);
     }
   };
- 
+
   recognition.onerror = (e) => {
     stopMic();
     if (e.error !== "no-speech" && e.error !== "aborted") {
       addSysMsg(`mic error: ${e.error}`);
     }
   };
- 
+
   recognition.onend = () => { stopMic(); };
 } else {
   micBtn.style.opacity = "0.3";
   micBtn.title = "Speech recognition not supported in this browser";
 }
- 
+
 function startMic() {
   if (!recognition || micActive) return;
   synth.cancel(); // stop TTS if talking
   recognition.start();
 }
- 
+
 function stopMic() {
   micActive = false;
   micBtn.classList.remove("active");
@@ -612,17 +617,17 @@ function stopMic() {
   userInput.placeholder = "Speak or type to TITAN...";
   if (!synth.speaking) setVoiceStatus("idle", "VOICE IDLE");
 }
- 
+
 micBtn.addEventListener("click", () => {
   if (micActive) { recognition.stop(); stopMic(); }
   else startMic();
 });
- 
+
 function setVoiceStatus(state, text) {
   voiceStatus.className = state === "idle" ? "" : state;
   voiceStatusText.textContent = text;
 }
- 
+
 // ── Mood ──
 function setMood(mood) {
   if (mood === currentMood) return;
@@ -639,11 +644,11 @@ function setMood(mood) {
   updateParticleColor();
 }
 document.querySelectorAll(".mood-btn").forEach(btn => btn.addEventListener("click", () => setMood(btn.dataset.mood)));
- 
+
 // ── Clock ──
 setInterval(() => { document.getElementById("clock").textContent = new Date().toTimeString().slice(0,8); }, 1000);
 document.getElementById("clock").textContent = new Date().toTimeString().slice(0,8);
- 
+
 // ── Chat ──
 function addSysMsg(text) {
   const el = document.createElement("div");
@@ -652,7 +657,7 @@ function addSysMsg(text) {
   logBox.appendChild(el);
   logBox.scrollTop = logBox.scrollHeight;
 }
- 
+
 function addBubble(who, text) {
   const wrap = document.createElement("div");
   wrap.className = `msg-wrap ${who}`;
@@ -674,7 +679,7 @@ function addBubble(who, text) {
   logBox.scrollTop = logBox.scrollHeight;
   return content;
 }
- 
+
 async function typeEffect(text, mood) {
   avatar.classList.add("talking");
   typingIndicator.classList.remove("active");
@@ -689,7 +694,7 @@ async function typeEffect(text, mood) {
   // Speak the reply after typing finishes
   speakText(text, mood);
 }
- 
+
 async function handleSend() {
   const input = userInput.value.trim();
   if ((!input && !pastedImage) || isTalking) return;
@@ -698,10 +703,10 @@ async function handleSend() {
   isTalking = true;
   userInput.disabled = true;
   document.getElementById("sendBtn").disabled = true;
- 
+
   const moodAtSend = currentMood;
   const imageToSend = pastedImage;
- 
+
   // Show user bubble — with pasted image if present
   const userWrap = document.createElement("div");
   userWrap.className = "msg-wrap user";
@@ -723,18 +728,18 @@ async function handleSend() {
   userWrap.appendChild(uBa); userWrap.appendChild(uBubble);
   logBox.appendChild(userWrap);
   logBox.scrollTop = logBox.scrollHeight;
- 
+
   // Clear pasted image
   pastedImage = null;
   imgPreviewWrap.classList.remove("visible");
   imgPreviewEl.src = "";
- 
+
   typingIndicator.classList.add("active");
   logBox.scrollTop = logBox.scrollHeight;
- 
+
   // ── Auto-detect image generation request ──
   const isImgGen = !imageToSend && IMG_GEN_REGEX.test(input);
- 
+
   try {
     if (isImgGen) {
       // IMAGE GENERATION PATH
@@ -744,15 +749,15 @@ async function handleSend() {
       loading.className = "img-loading"; loading.textContent = "⚡ GENERATING IMAGE...";
       tBubble.parentElement.appendChild(loading);
       logBox.scrollTop = logBox.scrollHeight;
- 
-      const res = await fetch("http://localhost:3000/api/imagine", {
+
+      const res = await fetch(BACKEND_URL + "/api/imagine", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt: input })
       });
       const data = await res.json();
       loading.remove();
- 
+
       if (data.imageUrl) {
         const img = document.createElement("img");
         img.className = "gen-img";
@@ -765,13 +770,13 @@ async function handleSend() {
       } else {
         tBubble.textContent = "Image generation failed.";
       }
- 
+
     } else {
       // CHAT / VISION PATH
       const body = { prompt: input || "Analyze this image.", history, mood: moodAtSend };
       if (imageToSend) body.image = imageToSend;
- 
-      const res = await fetch("http://localhost:3000/api/gemini", {
+
+      const res = await fetch(BACKEND_URL + "/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body)
@@ -785,18 +790,18 @@ async function handleSend() {
       if (history.length > 20) history = history.slice(-20);
       memCount.textContent = history.length;
     }
- 
+
   } catch (e) {
     typingIndicator.classList.remove("active");
     await typeEffect("Connection failed. Is the server running?", moodAtSend);
   }
- 
+
   isTalking = false;
   userInput.disabled = false;
   document.getElementById("sendBtn").disabled = false;
   userInput.focus();
 }
- 
+
 document.getElementById("sendBtn").onclick = handleSend;
 document.getElementById("clearBtn").onclick = () => {
   history = []; memCount.textContent = 0; logBox.innerHTML = '';
@@ -804,18 +809,18 @@ document.getElementById("clearBtn").onclick = () => {
   addSysMsg("memory wiped — TITAN reset");
 };
 userInput.onkeydown = e => { if (e.key === "Enter") handleSend(); };
- 
+
 // ── Canvas ──
 const canvas = document.getElementById('bgCanvas');
 const ctx = canvas.getContext('2d');
 let w, h, pts = [];
 let particleRgb = [0,255,229];
- 
+
 function updateParticleColor() {
   const raw = getComputedStyle(document.body).getPropertyValue('--ar').trim();
   particleRgb = raw.split(',').map(n => parseInt(n.trim()));
 }
- 
+
 function initCanvas() {
   w = canvas.width = window.innerWidth;
   h = canvas.height = window.innerHeight;
@@ -825,7 +830,7 @@ function initCanvas() {
     r: Math.random()*1.4+0.4
   }));
 }
- 
+
 function drawCanvas() {
   ctx.fillStyle = "rgba(2,4,8,0.04)";
   ctx.fillRect(0,0,w,h);
@@ -854,7 +859,7 @@ function drawCanvas() {
   }
   requestAnimationFrame(drawCanvas);
 }
- 
+
 window.onresize = initCanvas;
 initCanvas(); updateParticleColor(); drawCanvas();
 </script>

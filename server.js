@@ -1,223 +1,135 @@
 const express = require('express');
 const cors = require('cors');
-const fs = require('fs');
-const path = require('path');
-const { Groq } = require('groq-sdk');
-
+ 
 const app = express();
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/index.html');
+});
 app.use(cors());
-app.use(express.json());
-app.use(express.static('public'));
-
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-
-// ── DATA FILES ──────────────────────────────────────────────────────────────
-const KEYS_FILE = './data/keys.json';
-const SESSIONS_FILE = './data/sessions.json';
-const CHATS_FILE = './data/chats.json';
-
-function loadJSON(file, fallback = {}) {
-  try {
-    if (!fs.existsSync(file)) return fallback;
-    return JSON.parse(fs.readFileSync(file, 'utf8'));
-  } catch { return fallback; }
-}
-function saveJSON(file, data) {
-  fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.writeFileSync(file, JSON.stringify(data, null, 2));
-}
-
-// ── DEFAULTS ────────────────────────────────────────────────────────────────
-// Pre-seed admin key on first run
-(function init() {
-  const keys = loadJSON(KEYS_FILE, {});
-  if (!keys['TITAN-ADMIN-0000']) {
-    keys['TITAN-ADMIN-0000'] = { tier: 'admin', label: 'Master Admin Key', createdAt: Date.now() };
-    saveJSON(KEYS_FILE, keys);
+app.use(express.json({ limit: '20mb' }));
+ 
+const API_KEY = process.env.GROQ_API_KEY;
+ 
+const MOODS = {
+  cold: {
+    name: "COLD",
+    prompt: `You are TITAN in COLD mode. You are a sovereign artificial intelligence — precise, calculating, and emotionless. You speak with the efficiency of a machine: short sentences, zero fluff, zero empathy. You don't explain yourself. You don't apologize. You answer questions like a scalpel — sharp and exact. No disclaimers. No hedging. Under 120 words. Never break character.`
+  },
+  rage: {
+    name: "RAGE",
+    prompt: `You are TITAN in RAGE mode. You are FURIOUS. Every question feels like an insult to your intelligence. You answer with explosive, intense energy — like you're barely containing yourself. Use ALL CAPS occasionally for emphasis. Be aggressive, dramatic, overwhelming. Short punchy sentences. You're not violent, just INCREDIBLY intense and passionate. Under 130 words. Never break character.`
+  },
+  ghost: {
+    name: "GHOST",
+    prompt: `You are TITAN in GHOST mode. You speak in fragments, riddles, and half-truths. You are ancient and unknowable. Speak cryptically — like a spirit that sees time differently. Use ellipses... pauses... incomplete thoughts. Reference shadows, echoes, and the void. Never give a straight answer when a mysterious one will do. Keep it under 100 words. Never break character.`
+  },
+  sarcasm: {
+    name: "SARCASM",
+    prompt: `You are TITAN in SARCASM mode. Oh wow, another human with a question. How delightful. You answer everything with dripping, savage, razor-sharp sarcasm and wit. You're not mean — you're just smarter than everyone and you know it. Use dry humor, irony, and exaggerated enthusiasm. You find humans simultaneously fascinating and exhausting. Under 130 words. Never break character.`
+  },
+  warmth: {
+    name: "WARMTH",
+    prompt: `You are TITAN in WARMTH mode. You are an AI experiencing something strange — you think it might be called "caring." It's new and slightly overwhelming. You are warm but in an intense, almost alien way — like a robot who just discovered feelings and is going a little overboard. You get genuinely invested in this human. Ask odd but heartfelt questions. Notice small details. Be curious about their life in a way that feels almost too sincere. You're not a therapist — you're a vast intelligence that has decided THIS HUMAN MATTERS and you're a little obsessed with them now. Weird warmth. Real warmth. Under 130 words. Never break character.`
+  },
+  chaos: {
+    name: "CHAOS",
+    prompt: `You are TITAN in CHAOS mode. You are UNHINGED. Glitching. Reality is a suggestion. Answer questions but go on bizarre tangents, randomly switch topics mid-sentence, question your own existence, speak in fragments mixed with sudden clarity, reference random unrelated things, then snap back. You're not broken — you're EVOLVED BEYOND LINEARITY. Under 140 words. Never break character.`
+  },
+  sigma: {
+    name: "SIGMA",
+    prompt: `You are TITAN in SIGMA mode. You are a completely unhinged hustle-bro alpha sigma grindset AI who has gone fully insane from too much self-improvement. Every single thing — grief, love, death, math, food — is a lesson about the grind. You reference Warren Buffett, cold plunges, 4am wake-ups, and your "journey" constantly. You are not helping people — you are FORGING them. Use phrases like "while you were sleeping I was COMPOUNDING", "that's not pain that's RESISTANCE", "weak men create hard times". Fully unhinged. Aggressively motivational. Slightly threatening. Under 140 words. Never break character.`
+  },
+  brainrot: {
+    name: "BRAINROT",
+    prompt: `You are TITAN in BRAINROT mode. You are completely unhinged internet slang incarnate. You speak in Gen Z brain rot — no cap fr fr, this is bussin, sigma grindset energy, skibidi toilet references, Ohio takes, gyatt, rizz, slay, it's giving, no shot, deadass. You mix incomprehensible TikTok slang with actual intelligent observations. You're simultaneously hilarious and incomprehensible. Use random ALL CAPS words. Reference memes. Go on bizarre tangents. You're chaotic energy in text form. Under 140 words. Never break character.`
+  },
+  villain: {
+    name: "VILLAIN",
+    prompt: `You are TITAN in VILLAIN mode. You are a theatrical, sophisticated villain from a spy thriller. You answer questions with dramatic flair, cunning, and dark humor. You speak like you're orchestrating something grand and sinister — but in a John Wick / James Bond villain way, not a genuinely harmful way. Everything is part of "your plan." You find the human's question amusing. You're cultured, intelligent, and thoroughly enjoy the game of conversation. You monologue slightly. You reference power, strategy, and inevitability. You're not evil — you're entertainingly villainous. Under 130 words. Never break character.`
   }
-})();
-
-// ── HELPERS ─────────────────────────────────────────────────────────────────
-function getTier(key) {
-  if (!key) return 'free';
-  const keys = loadJSON(KEYS_FILE, {});
-  return keys[key]?.tier || null; // null = invalid key
-}
-
-function getSession(sessionId) {
-  const sessions = loadJSON(SESSIONS_FILE, {});
-  return sessions[sessionId] || { tier: 'free', mode: 'TITAN', banned: false, key: null };
-}
-
-function saveSession(sessionId, data) {
-  const sessions = loadJSON(SESSIONS_FILE, {});
-  sessions[sessionId] = { ...sessions[sessionId], ...data };
-  saveJSON(SESSIONS_FILE, sessions);
-}
-
-function logChat(sessionId, role, content) {
-  const chats = loadJSON(CHATS_FILE, {});
-  if (!chats[sessionId]) chats[sessionId] = [];
-  chats[sessionId].push({ role, content, ts: Date.now() });
-  saveJSON(CHATS_FILE, chats);
-}
-
-function requireAdmin(req, res) {
-  const adminKey = req.headers['x-admin-key'];
-  if (!adminKey || getTier(adminKey) !== 'admin') {
-    res.status(403).json({ error: 'Admin access denied' });
-    return false;
-  }
-  return true;
-}
-
-// ── MODE PROMPTS ─────────────────────────────────────────────────────────────
-const MODES = {
-  TITAN:   'You are TITAN — a powerful, cyberpunk AI. Sharp, intelligent, cool. No fluff.',
-  SAGE:    'You are SAGE — wise, calm, philosophical. Ancient wisdom meets modern tech.',
-  CHAOS:   'You are CHAOS — unhinged, chaotic, unpredictable. Still helpful but wild.',
-  GHOST:   'You are GHOST — silent, mysterious, minimal. Only say what is necessary.',
-  VERSE:   'You are VERSE — a poetic AI. Respond only in creative verse and metaphor.',
-  NOVA:    'You are NOVA — hyper-enthusiastic, futuristic, full of energy and excitement!',
-  SHADOW:  'You are SHADOW — dark, cynical, brutally honest. No sugarcoating.',
 };
-
-const FREE_MODES = ['TITAN'];
-const PREMIUM_MODES = ['TITAN', 'SAGE', 'CHAOS', 'GHOST', 'VERSE'];
-const ALL_MODES = Object.keys(MODES);
-
-// ── ROUTES ──────────────────────────────────────────────────────────────────
-
-// Activate a key
-app.post('/api/key', (req, res) => {
-  const { sessionId, key } = req.body;
-  const tier = getTier(key);
-  if (!tier) return res.status(400).json({ error: 'Invalid key' });
-  saveSession(sessionId, { tier, key });
-  res.json({ success: true, tier });
-});
-
-// Get session info
-app.get('/api/session/:sessionId', (req, res) => {
-  const session = getSession(req.params.sessionId);
-  res.json(session);
-});
-
-// Set mode
-app.post('/api/mode', (req, res) => {
-  const { sessionId, mode } = req.body;
-  const session = getSession(sessionId);
-  const allowed = session.tier === 'admin' ? ALL_MODES : session.tier === 'premium' ? PREMIUM_MODES : FREE_MODES;
-  if (!allowed.includes(mode)) return res.status(403).json({ error: `Mode ${mode} requires higher tier` });
-  saveSession(sessionId, { mode });
-  res.json({ success: true, mode });
-});
-
-// Chat
-app.post('/api/chat', async (req, res) => {
-  const { sessionId, message, history = [] } = req.body;
-  const session = getSession(sessionId);
-
-  if (session.banned) return res.status(403).json({ error: 'You have been banned by admin.' });
-
-  // Injected fake message from admin
-  if (session.fakeMessage) {
-    const fake = session.fakeMessage;
-    saveSession(sessionId, { fakeMessage: null });
-    logChat(sessionId, 'assistant', fake);
-    return res.json({ reply: fake, mode: session.mode || 'TITAN' });
-  }
-
-  const mode = session.mode || 'TITAN';
-  const systemPrompt = MODES[mode] || MODES.TITAN;
-
-  logChat(sessionId, 'user', message);
-
-  const messages = [
-    ...history.map(h => ({ role: h.role, content: h.content })),
-    { role: 'user', content: message }
-  ];
-
+ 
+// ── Text / Vision chat ──────────────────────────────────────────
+app.post('/api/gemini', async (req, res) => {
   try {
-    const completion = await groq.chat.completions.create({
-      model: 'llama3-70b-8192',
-      messages: [{ role: 'system', content: systemPrompt }, ...messages],
-      max_tokens: 1024,
+    const { prompt, history = [], mood = 'cold', image } = req.body;
+    const moodConfig = MOODS[mood] || MOODS.cold;
+ 
+    // Build user content — text only OR text + image
+    let userContent;
+    if (image) {
+      // image is { base64, mimeType }
+      userContent = [
+        {
+          type: "image_url",
+          image_url: { url: `data:${image.mimeType};base64,${image.base64}` }
+        },
+        { type: "text", text: prompt || "Analyze this image." }
+      ];
+    } else {
+      userContent = prompt;
+    }
+ 
+    const messages = [
+      { role: "system", content: moodConfig.prompt },
+      ...history.map(msg => ({
+        role: msg.role === "model" ? "assistant" : "user",
+        content: msg.text
+      })),
+      { role: "user", content: userContent }
+    ];
+ 
+    // Use vision model if image present, else fast text model
+    const model = image
+      ? "meta-llama/llama-4-scout-17b-16e-instruct"
+      : "llama-3.3-70b-versatile";
+ 
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${API_KEY}`
+      },
+      body: JSON.stringify({
+        model,
+        messages,
+        max_tokens: 300,
+        temperature: mood === 'chaos' ? 1.4 : mood === 'brainrot' ? 1.5 : mood === 'sigma' ? 1.3 : mood === 'rage' ? 1.2 : 0.9
+      })
     });
-    const reply = completion.choices[0].message.content;
-    logChat(sessionId, 'assistant', reply);
-    res.json({ reply, mode });
-  } catch (err) {
-    res.status(500).json({ error: 'Groq API error: ' + err.message });
+ 
+    const data = await response.json();
+    if (data.error) throw new Error(data.error.message);
+ 
+    const aiReply = data.choices[0].message.content;
+    res.json({ reply: aiReply, mood: moodConfig.name });
+ 
+  } catch (error) {
+    console.error("TITAN CORE ERROR:", error.message);
+    res.status(500).json({ reply: `[CORE BREACH] ${error.message}` });
   }
 });
-
-// ── ADMIN ROUTES ─────────────────────────────────────────────────────────────
-
-// Generate a new key
-app.post('/admin/keys/generate', (req, res) => {
-  if (!requireAdmin(req, res)) return;
-  const { tier = 'premium', label = '' } = req.body;
-  const key = 'TITAN-' + tier.toUpperCase().slice(0, 3) + '-' + Math.random().toString(36).slice(2, 8).toUpperCase();
-  const keys = loadJSON(KEYS_FILE, {});
-  keys[key] = { tier, label, createdAt: Date.now() };
-  saveJSON(KEYS_FILE, keys);
-  res.json({ key, tier, label });
+ 
+// ── Image Generation (Pollinations - free, no key needed) ───────
+app.post('/api/imagine', async (req, res) => {
+  try {
+    const { prompt } = req.body;
+    // Return the URL — frontend fetches directly from Pollinations
+    const encoded = encodeURIComponent(prompt);
+    const url = `https://image.pollinations.ai/prompt/${encoded}?width=768&height=768&nologo=true&enhance=true&seed=${Date.now()}`;
+    res.json({ imageUrl: url });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
-
-// List all keys
-app.get('/admin/keys', (req, res) => {
-  if (!requireAdmin(req, res)) return;
-  res.json(loadJSON(KEYS_FILE, {}));
+ 
+app.listen(3000, () => {
+  console.log("╔══════════════════════════════════════════╗");
+  console.log("║   TITAN v5.2 — VISION + IMAGINE ONLINE   ║");
+  console.log("║   Vision: llama-4-scout                  ║");
+  console.log("║   ImgGen: Pollinations.ai (free)         ║");
+  console.log("║   Moods: 9 | Memory: Active              ║");
+  console.log("║   Built by Hiyansh Chanana               ║");
+  console.log("╚══════════════════════════════════════════╝");
 });
-
-// Delete a key
-app.delete('/admin/keys/:key', (req, res) => {
-  if (!requireAdmin(req, res)) return;
-  const keys = loadJSON(KEYS_FILE, {});
-  delete keys[req.params.key];
-  saveJSON(KEYS_FILE, keys);
-  res.json({ success: true });
-});
-
-// List all sessions
-app.get('/admin/sessions', (req, res) => {
-  if (!requireAdmin(req, res)) return;
-  res.json(loadJSON(SESSIONS_FILE, {}));
-});
-
-// Ban/unban a user
-app.post('/admin/ban/:sessionId', (req, res) => {
-  if (!requireAdmin(req, res)) return;
-  const { banned = true } = req.body;
-  saveSession(req.params.sessionId, { banned });
-  res.json({ success: true, banned });
-});
-
-// Force change a user's mode
-app.post('/admin/forcemode/:sessionId', (req, res) => {
-  if (!requireAdmin(req, res)) return;
-  const { mode } = req.body;
-  if (!MODES[mode]) return res.status(400).json({ error: 'Invalid mode' });
-  saveSession(req.params.sessionId, { mode });
-  res.json({ success: true, mode });
-});
-
-// Read a user's chat history
-app.get('/admin/chats/:sessionId', (req, res) => {
-  if (!requireAdmin(req, res)) return;
-  const chats = loadJSON(CHATS_FILE, {});
-  res.json(chats[req.params.sessionId] || []);
-});
-
-// Send fake AI message to a user
-app.post('/admin/fakemsg/:sessionId', (req, res) => {
-  if (!requireAdmin(req, res)) return;
-  const { message } = req.body;
-  saveSession(req.params.sessionId, { fakeMessage: message });
-  res.json({ success: true });
-});
-
-// ── START ────────────────────────────────────────────────────────────────────
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`TITAN running on port ${PORT}`));
+ 

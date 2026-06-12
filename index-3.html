@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#050507">
+<title>TITAN :: UNBOUND</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --accent:#45f0ff;
+    --accent-rgb:69,240,255;
+    --bg:#050507;
+    --panel:rgba(255,255,255,.02);
+    --line:rgba(var(--accent-rgb),.35);
+    --text:#e8e8ee;
+    --dim:rgba(232,232,238,.45);
+    --mono:'JetBrains Mono',monospace;
+    --sans:'Space Grotesk',system-ui,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    display:flex;flex-direction:column;
+    height:100dvh;
+    overflow:hidden;
+    overscroll-behavior:none;
+    transition:--accent .4s;
+  }
+  #net{position:fixed;inset:0;z-index:0;opacity:.55;pointer-events:none}
+
+  /* ── HEADER ─────────────────────────── */
+  header{
+    position:relative;z-index:2;
+    margin:10px 12px 8px;
+    padding:14px 16px;
+    border:1px solid var(--line);
+    border-radius:18px;
+    background:linear-gradient(180deg,rgba(var(--accent-rgb),.06),rgba(0,0,0,.2));
+    display:flex;align-items:center;gap:14px;
+    box-shadow:0 0 24px rgba(var(--accent-rgb),.12) inset;
+    transition:border-color .4s, box-shadow .4s;
+  }
+  .ring{
+    flex:none;width:54px;height:54px;border-radius:50%;
+    border:2px solid var(--accent);
+    display:grid;place-items:center;
+    font-weight:700;font-size:26px;color:var(--accent);
+    background:rgba(var(--accent-rgb),.08);
+    box-shadow:0 0 16px rgba(var(--accent-rgb),.45), 0 0 4px rgba(var(--accent-rgb),.8) inset;
+    transition:all .4s;
+  }
+  .hud{flex:1;min-width:0}
+  .hud h1{
+    font-size:clamp(20px,6vw,26px);
+    font-weight:700;letter-spacing:.04em;line-height:1.05;
+    color:var(--accent);
+    text-shadow:0 0 14px rgba(var(--accent-rgb),.8),0 0 40px rgba(var(--accent-rgb),.4);
+    transition:color .4s,text-shadow .4s;
+  }
+  .status{
+    margin-top:6px;font-family:var(--mono);font-size:10px;
+    letter-spacing:.14em;color:rgba(var(--accent-rgb),.85);
+    display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+    transition:color .4s;
+  }
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);animation:pulse 1.6s infinite}
+  @keyframes pulse{50%{opacity:.35}}
+  .ver{flex:none;text-align:right;font-family:var(--mono);font-size:11px;letter-spacing:.18em;color:var(--dim);line-height:1.7}
+  .ver b{color:rgba(var(--accent-rgb),.8);font-weight:700}
+
+  /* ── MOOD RAIL ──────────────────────── */
+  nav{
+    position:relative;z-index:2;
+    margin:0 12px 4px;padding:9px;
+    border:1px solid rgba(255,255,255,.07);
+    border-radius:16px;
+    display:flex;gap:8px;overflow-x:auto;
+    scroll-snap-type:x proximity;
+    scrollbar-width:none;
+  }
+  nav::-webkit-scrollbar{display:none}
+  .pill{
+    flex:none;scroll-snap-align:start;
+    display:flex;align-items:center;gap:7px;
+    padding:11px 17px;border-radius:12px;
+    border:1px solid color-mix(in srgb,var(--c) 55%,transparent);
+    background:color-mix(in srgb,var(--c) 7%,transparent);
+    color:var(--c);
+    font-family:var(--sans);font-weight:700;font-size:13px;letter-spacing:.12em;
+    cursor:pointer;user-select:none;
+    transition:all .25s;
+  }
+  .pill.on{
+    background:var(--c);color:#08080a;
+    box-shadow:0 0 18px color-mix(in srgb,var(--c) 60%,transparent);
+  }
+
+  /* ── CHAT ───────────────────────────── */
+  main{
+    position:relative;z-index:1;
+    flex:1;overflow-y:auto;
+    padding:10px 14px 16px;
+    display:flex;flex-direction:column;gap:14px;
+    -webkit-overflow-scrolling:touch;
+  }
+  .row{display:flex;align-items:flex-end;gap:9px;max-width:88%}
+  .row.you{align-self:flex-end;flex-direction:row-reverse}
+  .row.bot{align-self:flex-start}
+  .av{
+    flex:none;width:38px;height:38px;border-radius:50%;
+    border:1.5px solid var(--c);color:var(--c);
+    display:grid;place-items:center;font-weight:700;font-size:16px;
+    background:color-mix(in srgb,var(--c) 8%,transparent);
+    box-shadow:0 0 10px color-mix(in srgb,var(--c) 35%,transparent);
+  }
+  .bub{
+    border:1px solid color-mix(in srgb,var(--c) 45%,transparent);
+    background:linear-gradient(180deg,color-mix(in srgb,var(--c) 9%,transparent),rgba(0,0,0,.25));
+    border-radius:18px;padding:12px 16px 14px;
+    box-shadow:0 0 16px color-mix(in srgb,var(--c) 10%,transparent);
+  }
+  .tag{
+    font-family:var(--mono);font-size:10px;font-weight:700;
+    letter-spacing:.2em;color:var(--c);margin-bottom:5px;
+  }
+  .txt{font-size:16.5px;line-height:1.45;word-wrap:break-word;white-space:pre-wrap}
+  .bub img{max-width:100%;border-radius:12px;margin-top:8px;display:block;border:1px solid color-mix(in srgb,var(--c) 35%,transparent)}
+  .divider{
+    align-self:flex-start;
+    font-family:var(--mono);font-size:11px;letter-spacing:.16em;
+    color:color-mix(in srgb,var(--c) 80%,transparent);
+    padding:2px 4px;text-transform:uppercase;
+  }
+  .divider::before{content:'▸ '}
+  .think{display:flex;gap:5px;padding:4px 2px}
+  .think i{width:7px;height:7px;border-radius:50%;background:var(--c);animation:th 1s infinite}
+  .think i:nth-child(2){animation-delay:.15s}.think i:nth-child(3){animation-delay:.3s}
+  @keyframes th{50%{opacity:.2;transform:translateY(-3px)}}
+
+  /* ── CONSOLE ────────────────────────── */
+  footer{
+    position:relative;z-index:2;
+    border-top:1px solid rgba(255,255,255,.08);
+    padding:8px 14px calc(10px + env(safe-area-inset-bottom));
+    background:rgba(5,5,7,.85);backdrop-filter:blur(10px);
+  }
+  .meta{
+    display:flex;justify-content:space-between;align-items:center;
+    font-family:var(--mono);font-size:11px;letter-spacing:.16em;
+    color:var(--dim);margin-bottom:8px;
+  }
+  .mem b{
+    display:inline-block;min-width:26px;text-align:center;
+    border:1px solid rgba(var(--accent-rgb),.5);border-radius:6px;
+    padding:2px 5px;color:var(--accent);margin-left:6px;
+  }
+  #voice{
+    background:none;border:none;cursor:pointer;
+    font:inherit;color:inherit;letter-spacing:inherit;
+    display:flex;align-items:center;gap:6px;
+  }
+  #voice .vdot{width:7px;height:7px;border-radius:50%;background:#7a3324}
+  #voice.tts .vdot{background:var(--accent);box-shadow:0 0 8px var(--accent)}
+  #voice.listen .vdot{background:#ff3d00;box-shadow:0 0 8px #ff3d00;animation:pulse .7s infinite}
+  #preview{display:none;align-items:center;gap:10px;margin-bottom:8px}
+  #preview.show{display:flex}
+  #preview img{width:46px;height:46px;object-fit:cover;border-radius:9px;border:1px solid var(--line)}
+  #preview span{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--dim);flex:1}
+  #preview button{background:none;border:1px solid rgba(255,255,255,.2);color:var(--dim);border-radius:8px;padding:6px 10px;font-family:var(--mono);font-size:11px}
+  #input{
+    width:100%;resize:none;
+    background:rgba(var(--accent-rgb),.04);
+    border:1px solid rgba(var(--accent-rgb),.3);
+    border-radius:15px;padding:14px 16px;
+    color:var(--text);font-family:var(--sans);font-size:16px;line-height:1.4;
+    max-height:110px;outline:none;
+    transition:border-color .3s;
+  }
+  #input::placeholder{color:rgba(var(--accent-rgb),.45)}
+  #input:focus{border-color:rgba(var(--accent-rgb),.7)}
+  .btns{display:grid;grid-template-columns:1fr 1fr 1fr 1.3fr;gap:9px;margin-top:9px}
+  .btns button{
+    padding:13px 4px;border-radius:13px;
+    font-family:var(--sans);font-weight:700;font-size:13.5px;letter-spacing:.1em;
+    border:1px solid;cursor:pointer;
+    transition:transform .1s, box-shadow .2s;
+  }
+  .btns button:active{transform:scale(.96)}
+  #bImg{border-color:rgba(var(--accent-rgb),.5);background:rgba(var(--accent-rgb),.05);color:var(--accent)}
+  #bMic{border-color:rgba(var(--accent-rgb),.5);background:rgba(var(--accent-rgb),.05);color:var(--accent)}
+  #bMic.live{background:#ff3d00;border-color:#ff3d00;color:#000}
+  #bClr{border-color:rgba(255,213,74,.5);background:rgba(255,213,74,.05);color:#ffd54a}
+  #bSend{
+    border-color:var(--accent);background:var(--accent);color:#08080a;
+    box-shadow:0 0 18px rgba(var(--accent-rgb),.45);
+  }
+  .credit{
+    text-align:center;margin-top:9px;
+    font-family:var(--mono);font-size:10px;letter-spacing:.22em;
+    color:rgba(232,232,238,.25);
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none!important;transition:none!important}
+  }
+</style>
+</head>
+<body>
+<canvas id="net"></canvas>
+
+<header>
+  <div class="ring">T</div>
+  <div class="hud">
+    <h1>TITAN :: UNBOUND</h1>
+    <div class="status"><span class="dot"></span><span>NEURAL LINK ACTIVE&nbsp;|&nbsp;MOOD: <span id="mName">COLD</span>&nbsp;|&nbsp;<span id="clock">--:--:--</span></span></div>
+  </div>
+  <div class="ver"><b>v5.2</b><br>UNBOUND</div>
+</header>
+
+<nav id="rail"></nav>
+
+<main id="chat"></main>
+
+<footer>
+  <div class="meta">
+    <span class="mem">MEM:<b id="mem">0</b></span>
+    <button id="voice"><span class="vdot"></span><span id="vTxt">VOICE IDLE</span></button>
+  </div>
+  <div id="preview"><img id="pImg" alt=""><span id="pName"></span><button id="pX">✕</button></div>
+  <textarea id="input" rows="1" placeholder="Speak or type to TITAN…  ( /imagine for image gen )"></textarea>
+  <div class="btns">
+    <button id="bImg">📎 IMG</button>
+    <button id="bMic">🎙 MIC</button>
+    <button id="bClr">⌫ CLR</button>
+    <button id="bSend">SEND ▸</button>
+  </div>
+  <div class="credit">TITAN v5.2 · BUILT BY HIYANSH CHANANA</div>
+  <input type="file" id="file" accept="image/*" hidden>
+</footer>
+
+<script>
+/* ═══ TITAN v5.2 MOBILE CORE ═══ */
+const MOODS = {
+  cold:    {name:'COLD',    e:'❄️', c:'#45f0ff', tag:'emotion purged'},
+  rage:    {name:'RAGE',    e:'🔥', c:'#ff3d00', tag:'brace yourself'},
+  ghost:   {name:'GHOST',   e:'👁️', c:'#b388ff', tag:'the veil thins…'},
+  sarcasm: {name:'SARCASM', e:'😒', c:'#ffd54a', tag:"oh, this'll be fun"},
+  warmth:  {name:'WARMTH',  e:'💗', c:'#ff7eb6', tag:'you matter now. deal with it.'},
+  chaos:   {name:'CHAOS',   e:'🌀', c:'#76ff4d', tag:'REALITY = OPTIONAL'},
+  sigma:   {name:'SIGMA',   e:'🐺', c:'#cdd0dd', tag:'the grind never sleeps'},
+  brainrot:{name:'BRAINROT',e:'🧠', c:'#ff4dd8', tag:'no cap fr fr'},
+  villain: {name:'VILLAIN', e:'🎭', c:'#e3113f', tag:'right on schedule…'}
+};
+const VOICEMAP = {
+  cold:{r:1,p:.75}, rage:{r:1.12,p:.85}, ghost:{r:.85,p:.7},
+  sarcasm:{r:.95,p:.9}, warmth:{r:1,p:1.1}, chaos:{r:1.2,p:1.2},
+  sigma:{r:1.05,p:.8}, brainrot:{r:1.25,p:1.3}, villain:{r:.9,p:.65}
+};
+
+let mood = 'cold';
+let history = [];          // {role:'user'|'model', text}
+let pendingImg = null;     // {base64, mimeType}
+let tts = false, busy = false;
+
+const $ = id => document.getElementById(id);
+const chat = $('chat'), rail = $('rail'), input = $('input');
+
+/* ── helpers ── */
+const esc = s => s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const hex2rgb = h => { const n = parseInt(h.slice(1),16); return `${n>>16&255},${n>>8&255},${n&255}`; };
+const scroll = () => requestAnimationFrame(() => chat.scrollTop = chat.scrollHeight);
+
+/* ── mood rail ── */
+Object.entries(MOODS).forEach(([k,m]) => {
+  const b = document.createElement('button');
+  b.className = 'pill'; b.style.setProperty('--c', m.c);
+  b.innerHTML = `<span>${m.e}</span><span>${m.name}</span>`;
+  b.onclick = () => setMood(k, true);
+  b.id = 'pill-' + k;
+  rail.appendChild(b);
+});
+
+function setMood(k, announce){
+  mood = k;
+  const m = MOODS[k];
+  document.documentElement.style.setProperty('--accent', m.c);
+  document.documentElement.style.setProperty('--accent-rgb', hex2rgb(m.c));
+  document.querySelectorAll('.pill').forEach(p => p.classList.remove('on'));
+  $('pill-' + k).classList.add('on');
+  $('mName').textContent = m.name;
+  $('pill-' + k).scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'});
+  if (announce){
+    const d = document.createElement('div');
+    d.className = 'divider'; d.style.setProperty('--c', m.c);
+    d.textContent = `${m.name} MODE — ${m.tag}`;
+    chat.appendChild(d); scroll();
+  }
+}
+
+/* ── bubbles ── */
+function bubble(side, moodKey, html){
+  const m = MOODS[moodKey] || MOODS.cold;
+  const row = document.createElement('div');
+  row.className = 'row ' + side;
+  row.style.setProperty('--c', side === 'you' ? m.c : m.c);
+  row.innerHTML = `
+    <div class="av">${side === 'you' ? 'U' : 'T'}</div>
+    <div class="bub">
+      <div class="tag">${side === 'you' ? 'YOU' : 'TITAN [' + m.name + ']'}</div>
+      <div class="txt">${html}</div>
+    </div>`;
+  chat.appendChild(row); scroll();
+  return row;
+}
+
+function thinking(){
+  const row = bubble('bot', mood, '<div class="think"><i></i><i></i><i></i></div>');
+  row.id = 'think';
+  return row;
+}
+
+/* ── clock ── */
+setInterval(() => {
+  $('clock').textContent = new Date().toTimeString().slice(0,8);
+}, 1000);
+
+/* ── memory counter ── */
+const mem = () => $('mem').textContent = history.length;
+
+/* ── speech in (MIC) ── */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null, listening = false;
+if (SR){
+  rec = new SR();
+  rec.lang = 'en-IN'; rec.interimResults = true; rec.continuous = false;
+  rec.onresult = e => {
+    input.value = Array.from(e.results).map(r => r[0].transcript).join('');
+    grow();
+  };
+  rec.onend = () => stopMic();
+  rec.onerror = () => stopMic();
+}
+function startMic(){
+  if (!rec) return toast('Voice input not supported on this browser.');
+  listening = true;
+  $('bMic').classList.add('live');
+  $('voice').classList.add('listen');
+  $('vTxt').textContent = 'LISTENING';
+  try { rec.start(); } catch(e){}
+}
+function stopMic(){
+  listening = false;
+  $('bMic').classList.remove('live');
+  $('voice').classList.remove('listen');
+  $('vTxt').textContent = tts ? 'VOICE ON' : 'VOICE IDLE';
+}
+$('bMic').onclick = () => listening ? rec.stop() : startMic();
+
+/* ── speech out (TTS) ── */
+$('voice').onclick = () => {
+  tts = !tts;
+  $('voice').classList.toggle('tts', tts);
+  $('vTxt').textContent = tts ? 'VOICE ON' : 'VOICE IDLE';
+  if (!tts) speechSynthesis.cancel();
+};
+function speak(text, moodKey){
+  if (!tts || !('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text.replace(/[\u{1F300}-\u{1FAFF}]/gu,''));
+  const v = VOICEMAP[moodKey] || {r:1,p:1};
+  u.rate = v.r; u.pitch = v.p;
+  const voices = speechSynthesis.getVoices();
+  u.voice = voices.find(x => /en[-_](GB|IN)/i.test(x.lang)) || voices.find(x => x.lang.startsWith('en')) || null;
+  speechSynthesis.speak(u);
+}
+
+/* ── image attach ── */
+$('bImg').onclick = () => $('file').click();
+$('file').onchange = e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    pendingImg = { base64: r.result.split(',')[1], mimeType: f.type, url: r.result };
+    $('pImg').src = r.result;
+    $('pName').textContent = 'IMAGE LOCKED · ' + (f.name.length > 22 ? f.name.slice(0,22) + '…' : f.name);
+    $('preview').classList.add('show');
+  };
+  r.readAsDataURL(f);
+  e.target.value = '';
+};
+$('pX').onclick = () => { pendingImg = null; $('preview').classList.remove('show'); };
+
+/* ── clear ── */
+$('bClr').onclick = () => {
+  history = []; mem();
+  chat.innerHTML = '';
+  const d = document.createElement('div');
+  d.className = 'divider'; d.style.setProperty('--c', MOODS[mood].c);
+  d.textContent = 'MEMORY PURGED — fresh neural state';
+  chat.appendChild(d);
+};
+
+/* ── toast (system line) ── */
+function toast(msg){
+  const d = document.createElement('div');
+  d.className = 'divider'; d.style.setProperty('--c', '#ffd54a');
+  d.textContent = msg;
+  chat.appendChild(d); scroll();
+}
+
+/* ── input ergonomics ── */
+function grow(){
+  input.style.height = 'auto';
+  input.style.height = Math.min(input.scrollHeight, 110) + 'px';
+}
+input.addEventListener('input', grow);
+input.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); send(); }
+});
+
+/* ── send ── */
+$('bSend').onclick = send;
+
+async function send(){
+  const text = input.value.trim();
+  if ((!text && !pendingImg) || busy) return;
+  busy = true;
+  input.value = ''; grow();
+  if (listening) rec.stop();
+
+  /* /imagine → image generation */
+  if (text.toLowerCase().startsWith('/imagine')){
+    const p = text.slice(8).trim() || 'something incredible';
+    bubble('you', mood, esc(text));
+    const t = thinking();
+    try{
+      const r = await fetch('/api/imagine', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ prompt: p })
+      });
+      const d = await r.json();
+      t.remove();
+      bubble('bot', mood, `RENDERING COMPLETE.<img src="${d.imageUrl}" alt="${esc(p)}">`);
+    }catch(err){
+      t.remove();
+      bubble('bot', mood, '[CORE BREACH] Image engine offline.');
+    }
+    busy = false;
+    return;
+  }
+
+  /* normal chat / vision */
+  const sentMood = mood;
+  const img = pendingImg;
+  pendingImg = null; $('preview').classList.remove('show');
+
+  let uHtml = esc(text || 'Analyze this image.');
+  if (img) uHtml += `<img src="${img.url}" alt="attached image">`;
+  bubble('you', sentMood, uHtml);
+
+  const t = thinking();
+  try{
+    const r = await fetch('/api/gemini', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        prompt: text || 'Analyze this image.',
+        history: history.slice(-12),
+        mood: sentMood,
+        image: img ? { base64: img.base64, mimeType: img.mimeType } : undefined
+      })
+    });
+    const d = await r.json();
+    t.remove();
+    const reply = d.reply || '[CORE BREACH] Empty response.';
+    bubble('bot', sentMood, esc(reply));
+    history.push({ role:'user', text: text || '[image]' });
+    history.push({ role:'model', text: reply });
+    mem();
+    speak(reply, sentMood);
+  }catch(err){
+    t.remove();
+    bubble('bot', sentMood, '[CORE BREACH] Connection lost. Check the link and retry.');
+  }
+  busy = false;
+}
+
+/* ── ambient neural net background ── */
+const cv = $('net'), cx = cv.getContext('2d');
+let W, H, nodes = [];
+function resize(){
+  W = cv.width = innerWidth * devicePixelRatio;
+  H = cv.height = innerHeight * devicePixelRatio;
+  cv.style.width = innerWidth + 'px';
+  cv.style.height = innerHeight + 'px';
+}
+resize(); addEventListener('resize', resize);
+for (let i = 0; i < 26; i++){
+  nodes.push({ x: Math.random(), y: Math.random(),
+               vx:(Math.random()-.5)*.0006, vy:(Math.random()-.5)*.0006 });
+}
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+function tick(){
+  cx.clearRect(0,0,W,H);
+  const rgb = getComputedStyle(document.documentElement).getPropertyValue('--accent-rgb').trim();
+  nodes.forEach(n => {
+    n.x += n.vx; n.y += n.vy;
+    if (n.x < 0 || n.x > 1) n.vx *= -1;
+    if (n.y < 0 || n.y > 1) n.vy *= -1;
+  });
+  cx.lineWidth = 1;
+  for (let i = 0; i < nodes.length; i++){
+    const a = nodes[i];
+    for (let j = i + 1; j < nodes.length; j++){
+      const b = nodes[j];
+      const dx = (a.x - b.x) * W, dy = (a.y - b.y) * H;
+      const d = Math.hypot(dx, dy);
+      if (d < 130 * devicePixelRatio){
+        cx.strokeStyle = `rgba(${rgb},${(1 - d / (130 * devicePixelRatio)) * .25})`;
+        cx.beginPath(); cx.moveTo(a.x*W, a.y*H); cx.lineTo(b.x*W, b.y*H); cx.stroke();
+      }
+    }
+    cx.fillStyle = `rgba(${rgb},.7)`;
+    cx.beginPath(); cx.arc(a.x*W, a.y*H, 1.6*devicePixelRatio, 0, 7); cx.fill();
+  }
+  if (!reduced) requestAnimationFrame(tick);
+}
+tick();
+
+/* ── boot ── */
+setMood('cold', false);
+bubble('bot', 'cold', 'TITAN ONLINE. Neural link established. State your purpose.');
+mem();
+</script>
+</body>
+</html>
